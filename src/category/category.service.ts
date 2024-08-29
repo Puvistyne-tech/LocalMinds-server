@@ -1,0 +1,110 @@
+import {Injectable, NotFoundException} from '@nestjs/common';
+import {InjectModel} from '@nestjs/mongoose';
+import {Model} from 'mongoose';
+import {Category, CategoryDocument} from './entities/category.entity';
+import {CreateCategoryDto} from './dto/create-category.dto';
+
+@Injectable()
+export class CategoryService {
+    constructor(
+        @InjectModel(Category.name) private categoryModel: Model<Category>,
+    ) {
+    }
+
+    // Create or update a category
+    async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
+        const {name, subcategories} = createCategoryDto;
+
+        // Check if a category with the same name already exists
+        let category = await this.categoryModel.findOne({name}).exec();
+
+        if (category) {
+            // Update existing category with new subcategories
+            if (subcategories && subcategories.length > 0) {
+                await this.addSubcategories(category, subcategories);
+            }
+            return this.populateSubcategories(category);
+        }
+
+        // Category does not exist, create it
+        category = new this.categoryModel({name});
+
+        if (subcategories && subcategories.length > 0) {
+            await this.addSubcategories(category, subcategories);
+        }
+
+        await category.save();
+        return this.populateSubcategories(category);
+    }
+
+    // Add subcategories to a category
+    private async addSubcategories(category: CategoryDocument, subcategoryNames: string[]): Promise<void> {
+        for (const subcategoryName of subcategoryNames) {
+            let subcategory = await this.categoryModel.findOne({name: subcategoryName}).exec();
+            if (!subcategory) {
+                // Create new subcategory if it doesn't exist
+                subcategory = new this.categoryModel({name: subcategoryName});
+                await subcategory.save();
+            }
+
+            // Avoid duplicate subcategory entries
+            if (!category.subcategories.includes(subcategory.id)) {
+                category.subcategories.push(subcategory.id);
+            }
+
+            // Recursively add subcategories to the new subcategory
+            await this.addSubcategories(subcategory, []); // Assuming you want to handle recursive subcategories later
+        }
+        await category.save();
+    }
+
+    // Populate subcategories recursively
+    private async populateSubcategories(category: CategoryDocument, visitedIds: Set<string> = new Set()): Promise<CategoryDocument> {
+        if (visitedIds.has(category.id)) {
+            return category.toObject(); // Avoid processing the same category multiple times
+        }
+
+        visitedIds.add(category.id);
+        const populatedCategory = category.toObject();
+
+        if (populatedCategory.subcategories && populatedCategory.subcategories.length > 0) {
+            const subcategories = await this.categoryModel.find({_id: {$in: populatedCategory.subcategories}}).exec();
+            populatedCategory.subcategories = await Promise.all(
+                subcategories.map(async (sub) => this.populateSubcategories(sub, visitedIds))
+            );
+        }
+
+        return populatedCategory;
+    }
+
+    // Find a category by ID
+    async findOne(id: string): Promise<Category> {
+        const category = await this.categoryModel.findById(id).exec();
+        if (!category) {
+            throw new NotFoundException(`Category with ID ${id} not found`);
+        }
+        return this.populateSubcategories(category);
+    }
+
+    // Find all top-level categories
+    async findAllTopLevel(): Promise<Category[]> {
+        const topLevelCategories = await this.categoryModel.find({subcategories: {$exists: true, $ne: []}}).exec();
+        return Promise.all(topLevelCategories.map(category => this.populateSubcategories(category)));
+    }
+
+    // Find all categories
+    async findAll(): Promise<Category[]> {
+        const categories = await this.categoryModel.find().exec();
+        return Promise.all(categories.map(category => this.populateSubcategories(category)));
+    }
+
+    // Delete a category by ID
+    async remove(id: string): Promise<void> {
+        const category = await this.categoryModel.findById(id).exec();
+        if (!category) {
+            throw new NotFoundException(`Category with ID ${id} not found`);
+        }
+
+        await this.categoryModel.findByIdAndDelete(id).exec();
+    }
+}
