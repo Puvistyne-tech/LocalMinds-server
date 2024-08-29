@@ -26,7 +26,7 @@ export class CreateSkillDto {
 
   @IsArray()
   @IsOptional()
-  skillItems?: CreateSkillItemDto[];
+  skill_items?: CreateSkillItemDto[];
 
   @IsArray()
   @IsOptional()

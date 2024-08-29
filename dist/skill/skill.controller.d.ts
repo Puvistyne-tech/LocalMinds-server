@@ -7,6 +7,7 @@ import { UpdateSkillItemDto } from './dto/update-skill-item.dto';
 export declare class SkillsController {
     private readonly skillsService;
     constructor(skillsService: SkillsService);
+    testEndpoint(): string;
     createDemoSkill(): Promise<Skill>;
     findAll(): Promise<Skill[]>;
     findSkillsByCriteria(name?: string, tags?: string[], category?: string): Promise<Skill[]>;

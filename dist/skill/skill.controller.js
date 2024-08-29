@@ -22,6 +22,9 @@ let SkillsController = class SkillsController {
     constructor(skillsService) {
         this.skillsService = skillsService;
     }
+    testEndpoint() {
+        return 'Test endpoint is working';
+    }
     async createDemoSkill() {
         return this.skillsService.createDemo();
     }
@@ -60,6 +63,12 @@ let SkillsController = class SkillsController {
     }
 };
 exports.SkillsController = SkillsController;
+__decorate([
+    (0, common_1.Get)('test'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", String)
+], SkillsController.prototype, "testEndpoint", null);
 __decorate([
     (0, common_1.Get)('demo'),
     __metadata("design:type", Function),

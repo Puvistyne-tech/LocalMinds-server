@@ -1,9 +1,10 @@
+import { Types } from "mongoose";
 export declare class UpdateSkillDto {
     name?: string;
     description?: string;
     date_created?: Date;
     date_modified?: Date;
-    skillItems?: any[];
+    skill_items?: any[];
     tags?: string[];
-    category?: string;
+    category?: Types.ObjectId;
 }

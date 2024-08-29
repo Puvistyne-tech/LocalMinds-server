@@ -10,10 +10,6 @@ export enum SkillItemType {
 
 @Schema({ discriminatorKey: 'type' })
 export class SkillItem extends Document {
-  // constructor({ order }) {
-  //   super();
-  //   this.order = order;
-  // }
 
   @Prop({ required: true })
   order: number;

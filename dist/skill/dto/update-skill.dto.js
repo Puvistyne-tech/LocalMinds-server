@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateSkillDto = void 0;
 const class_validator_1 = require("class-validator");
+const mongoose_1 = require("mongoose");
 class UpdateSkillDto {
 }
 exports.UpdateSkillDto = UpdateSkillDto;
@@ -38,7 +39,7 @@ __decorate([
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Array)
-], UpdateSkillDto.prototype, "skillItems", void 0);
+], UpdateSkillDto.prototype, "skill_items", void 0);
 __decorate([
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsOptional)(),
@@ -47,6 +48,6 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
+    __metadata("design:type", mongoose_1.Types.ObjectId)
 ], UpdateSkillDto.prototype, "category", void 0);
 //# sourceMappingURL=update-skill.dto.js.map

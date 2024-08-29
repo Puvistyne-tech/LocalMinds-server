@@ -34,14 +34,14 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", Array)
-], Skill.prototype, "skillItems", void 0);
+], Skill.prototype, "skill_items", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", Array)
 ], Skill.prototype, "tags", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
-    __metadata("design:type", String)
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Category', required: true }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
 ], Skill.prototype, "category", void 0);
 exports.Skill = Skill = __decorate([
     (0, mongoose_1.Schema)()

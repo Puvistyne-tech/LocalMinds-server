@@ -38,7 +38,7 @@ __decorate([
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Array)
-], CreateSkillDto.prototype, "skillItems", void 0);
+], CreateSkillDto.prototype, "skill_items", void 0);
 __decorate([
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsOptional)(),

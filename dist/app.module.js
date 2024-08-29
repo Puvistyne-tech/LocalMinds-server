@@ -12,6 +12,8 @@ const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const mongoose_1 = require("@nestjs/mongoose");
 const skill_module_1 = require("./skill/skill.module");
+const category_module_1 = require("./category/category.module");
+const config_1 = require("@nestjs/config");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -19,7 +21,9 @@ exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
             mongoose_1.MongooseModule.forRoot('mongodb://localhost/nest'),
+            config_1.ConfigModule.forRoot({ isGlobal: true }),
             skill_module_1.SkillsModule,
+            category_module_1.CategoryModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

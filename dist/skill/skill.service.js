@@ -20,18 +20,24 @@ const skill_entity_1 = require("./entities/skill.entity");
 const skillTtem_entity_1 = require("./entities/skillTtem.entity");
 const work_document_1 = require("./entities/work.document");
 const photo_document_1 = require("./entities/photo.document");
+const category_entity_1 = require("../category/entities/category.entity");
 let SkillsService = class SkillsService {
-    constructor(skillModel, photoModel, linkModel, workModel, textModel) {
+    constructor(skillModel, photoModel, linkModel, workModel, textModel, categoryModel) {
         this.skillModel = skillModel;
         this.photoModel = photoModel;
         this.linkModel = linkModel;
         this.workModel = workModel;
         this.textModel = textModel;
+        this.categoryModel = categoryModel;
     }
     async create(createSkillDto) {
-        const skillItems = await Promise.all(createSkillDto.skillItems.map(async (item) => {
+        const skill_items = await Promise.all(createSkillDto.skill_items.map(async (item) => {
             return this.createSkillItem(item);
         }));
+        const category = await this.categoryModel.findById(createSkillDto.category).exec();
+        if (!category) {
+            throw new common_1.NotFoundException(`Category with ID ${createSkillDto.category} not found`);
+        }
         const createdSkill = new this.skillModel({
             name: createSkillDto.name,
             description: createSkillDto.description,
@@ -39,14 +45,14 @@ let SkillsService = class SkillsService {
             date_modified: new Date(),
             tags: createSkillDto.tags,
             category: createSkillDto.category,
-            skillItems: skillItems,
+            skill_items: skill_items,
         });
         return createdSkill.save();
     }
     async findSkillById(id) {
         const skill = await this.skillModel
             .findById(id)
-            .populate('skillItems')
+            .populate('skill_items')
             .exec();
         if (!skill) {
             throw new common_1.NotFoundException(`Skill with ID ${id} not found`);
@@ -57,7 +63,7 @@ let SkillsService = class SkillsService {
         return this.skillModel.find().exec();
     }
     async findAllSkills() {
-        return this.skillModel.find().populate('skillItems').exec();
+        return this.skillModel.find().populate('skill_items').exec();
     }
     async findSkillsByCriteria(criteria) {
         const exactQuery = {};
@@ -75,16 +81,20 @@ let SkillsService = class SkillsService {
             partialQuery.tags = { $all: tagRegexes };
         }
         if (criteria.category) {
+            const category = await this.categoryModel.findById(criteria.category).exec();
+            if (!category) {
+                throw new common_1.NotFoundException(`Category with ID ${criteria.category} not found`);
+            }
             exactQuery.category = criteria.category;
             partialQuery.category = criteria.category;
         }
         const exactMatches = await this.skillModel
             .find(exactQuery)
-            .populate('skillItems')
+            .populate('skill_items')
             .exec();
         const partialMatches = await this.skillModel
             .find(partialQuery)
-            .populate('skillItems')
+            .populate('skill_items')
             .exec();
         return exactMatches.concat(partialMatches.filter((partialItem) => !exactMatches.some((exactItem) => exactItem._id.equals(partialItem._id))));
     }
@@ -106,12 +116,12 @@ let SkillsService = class SkillsService {
     async findSkillItemsBySkillId(skillId) {
         const skill = await this.skillModel
             .findById(skillId)
-            .populate('skillItems')
+            .populate('skill_items')
             .exec();
         if (!skill) {
             throw new Error(`Skill with ID ${skillId} not found`);
         }
-        return skill.skillItems;
+        return skill.skill_items;
     }
     async findSkillItemsByType(type) {
         type = type.toLowerCase();
@@ -147,7 +157,7 @@ let SkillsService = class SkillsService {
             location: 'New York, NY',
             time_slots: ['9:00 AM - 11:00 AM', '1:00 PM - 3:00 PM'],
         });
-        const skillItems = [demoText, demoLink, demoPhoto, demoWork];
+        const skill_items = [demoText, demoLink, demoPhoto, demoWork];
         const demoSkill = new this.skillModel({
             name: 'Sample Skill',
             description: 'This is a sample skill description.',
@@ -155,7 +165,7 @@ let SkillsService = class SkillsService {
             date_modified: new Date(),
             tags: ['Sample Skill'],
             category: 'Sample Skill',
-            skillItems: skillItems,
+            skill_items: skill_items,
         });
         return this.createSkill(demoSkill);
     }
@@ -174,43 +184,16 @@ let SkillsService = class SkillsService {
             existingSkill.description = updateSkillDto.description;
         if (updateSkillDto.tags)
             existingSkill.tags = updateSkillDto.tags;
-        if (updateSkillDto.category)
+        if (updateSkillDto.category) {
+            const category = await this.categoryModel.findById(updateSkillDto.category).exec();
+            if (!category) {
+                throw new common_1.NotFoundException(`Category with ID ${updateSkillDto.category} not found`);
+            }
             existingSkill.category = updateSkillDto.category;
-        if (updateSkillDto.skillItems) {
-            existingSkill.skillItems = await Promise.all(updateSkillDto.skillItems.map(async (item) => {
-                switch (item.type) {
-                    case 'Text':
-                        return new this.textModel({
-                            order: item.order,
-                            text: item.text,
-                            type: item.type,
-                        });
-                    case 'Link':
-                        return new this.linkModel({
-                            order: item.order,
-                            link: item.link,
-                            description: item.description,
-                            type: item.type,
-                        });
-                    case 'Photo':
-                        return new this.photoModel({
-                            order: item.order,
-                            content: item.content,
-                            name: item.name,
-                            type: item.type,
-                        });
-                    case 'Work':
-                        return new this.workModel({
-                            order: item.order,
-                            name: item.name,
-                            description: item.description,
-                            location: item.location,
-                            time_slots: item.time_slots,
-                            type: item.type,
-                        });
-                    default:
-                        throw new Error(`Unknown SkillItem type: ${item.type}`);
-                }
+        }
+        if (updateSkillDto.skill_items) {
+            existingSkill.skill_items = await Promise.all(updateSkillDto.skill_items.map(async (item) => {
+                return this.createSkillItem(item);
             }));
         }
         existingSkill.date_modified = new Date();
@@ -221,7 +204,7 @@ let SkillsService = class SkillsService {
         if (!result) {
             throw new Error(`Skill with ID ${id} not found`);
         }
-        await Promise.all(result.skillItems.map(async (item) => {
+        await Promise.all(result.skill_items.map(async (item) => {
             switch (item.type) {
                 case 'Text':
                     return this.textModel.findByIdAndDelete(item._id).exec();
@@ -275,7 +258,9 @@ exports.SkillsService = SkillsService = __decorate([
     __param(2, (0, mongoose_1.InjectModel)(skillTtem_entity_1.Link.name)),
     __param(3, (0, mongoose_1.InjectModel)(work_document_1.Work.name)),
     __param(4, (0, mongoose_1.InjectModel)(skillTtem_entity_1.Text.name)),
+    __param(5, (0, mongoose_1.InjectModel)(category_entity_1.Category.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

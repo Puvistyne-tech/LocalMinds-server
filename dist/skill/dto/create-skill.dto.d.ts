@@ -4,7 +4,7 @@ export declare class CreateSkillDto {
     description: string;
     date_created?: Date;
     date_modified?: Date;
-    skillItems?: CreateSkillItemDto[];
+    skill_items?: CreateSkillItemDto[];
     tags?: string[];
     category?: string;
 }

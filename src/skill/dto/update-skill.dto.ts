@@ -1,31 +1,32 @@
-import { IsArray, IsDate, IsOptional, IsString } from 'class-validator';
+import {IsArray, IsDate, IsOptional, IsString} from 'class-validator';
+import {Types} from "mongoose";
 
 export class UpdateSkillDto {
-  @IsString()
-  @IsOptional()
-  name?: string;
+    @IsString()
+    @IsOptional()
+    name?: string;
 
-  @IsString()
-  @IsOptional()
-  description?: string;
+    @IsString()
+    @IsOptional()
+    description?: string;
 
-  @IsDate()
-  @IsOptional()
-  date_created?: Date;
+    @IsDate()
+    @IsOptional()
+    date_created?: Date;
 
-  @IsDate()
-  @IsOptional()
-  date_modified?: Date;
+    @IsDate()
+    @IsOptional()
+    date_modified?: Date;
 
-  @IsArray()
-  @IsOptional()
-  skillItems?: any[]; // You might want to define a more specific type here
+    @IsArray()
+    @IsOptional()
+    skill_items?: any[]; // You might want to define a more specific type here
 
-  @IsArray()
-  @IsOptional()
-  tags?: string[];
+    @IsArray()
+    @IsOptional()
+    tags?: string[];
 
-  @IsString()
-  @IsOptional()
-  category?: string;
+    @IsString()
+    @IsOptional()
+    category?: Types.ObjectId;
 }
