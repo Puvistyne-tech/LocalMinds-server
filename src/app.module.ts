@@ -24,7 +24,7 @@ import {ConfigModule} from "@nestjs/config";
         // UserModule,
         // EventModule,
         SkillsModule,
-        CategoryModule,
+        // CategoryModule,
     ],
     controllers: [AppController],
     providers: [AppService],

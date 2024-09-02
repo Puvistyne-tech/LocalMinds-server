@@ -1,5 +1,5 @@
 import {IsArray, IsDate, IsOptional, IsString} from 'class-validator';
-import {Types} from "mongoose";
+import {UpdateSkillItemDto} from "./update-skill-item.dto";
 
 export class UpdateSkillDto {
     @IsString()
@@ -20,7 +20,7 @@ export class UpdateSkillDto {
 
     @IsArray()
     @IsOptional()
-    skill_items?: any[]; // You might want to define a more specific type here
+    skill_items?: UpdateSkillItemDto[]; // You might want to define a more specific type here
 
     @IsArray()
     @IsOptional()
@@ -28,5 +28,5 @@ export class UpdateSkillDto {
 
     @IsString()
     @IsOptional()
-    category?: Types.ObjectId;
+    category?: String;
 }
