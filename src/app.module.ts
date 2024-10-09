@@ -5,6 +5,8 @@ import {MongooseModule} from '@nestjs/mongoose';
 import {SkillsModule} from './skill/skill.module';
 import {CategoryModule} from './category/category.module';
 import {ConfigModule} from "@nestjs/config";
+import {UserModule} from "./user/user.module";
+import {AuthModule} from "./auth/auth.module";
 
 @Module({
     imports: [
@@ -20,7 +22,7 @@ import {ConfigModule} from "@nestjs/config";
         //   entities: [__dirname + '/**/*.entity{.ts,.js}'],
         //   synchronize: true, // Set to false in production
         // }),
-        // AuthModule,
+        AuthModule,
         // UserModule,
         // EventModule,
         SkillsModule,

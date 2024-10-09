@@ -1,38 +1,39 @@
-import {
-  IsArray,
-  IsDate,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
-import { CreateSkillItemDto } from './create-skill-item.dto';
+import {IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString,} from 'class-validator';
+import {SkillType} from "../entities/skill.entity";
 
 export class CreateSkillDto {
-  @IsString()
-  @IsNotEmpty()
-  name: string;
+    @IsString()
+    @IsNotEmpty()
+    title: string;
 
-  @IsString()
-  @IsNotEmpty()
-  description: string;
+    @IsNotEmpty()
+    content: any;
 
-  @IsDate()
-  @IsOptional()
-  date_created?: Date;
+    // @IsDate()
+    // @IsOptional()
+    // date_created?: Date;
 
-  @IsDate()
-  @IsOptional()
-  date_modified?: Date;
+    // @IsDate()
+    // @IsOptional()
+    // date_modified?: Date = new Date();
 
-  @IsArray()
-  @IsOptional()
-  skill_items?: CreateSkillItemDto[];
+    @IsArray()
+    @IsOptional()
+    tags?: string[];
 
-  @IsArray()
-  @IsOptional()
-  tags?: string[];
+    @IsString()
+    @IsNotEmpty()
+    category: string;
 
-  @IsString()
-  @IsOptional()
-  category?: string;
+    @IsEnum(SkillType) // Add validation for skill_type using the SkillType enum
+    @IsNotEmpty()
+    type: SkillType;
+
+    @IsNotEmpty()
+    @IsString()
+    userId: String; // Optional field to associate the skill with a user (if applicable)
+
+    @IsNotEmpty()
+    @IsBoolean()
+    status: boolean = false; // Opti
 }

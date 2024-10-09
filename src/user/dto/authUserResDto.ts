@@ -1,25 +1,25 @@
 import {User} from '../entities/user.entity';
+import {UserDto} from "./user.dto";
+import {Expose, plainToInstance, Type} from "class-transformer";
 
-export class UserDto {
-    user: {
-        id: string;
-        username: string;
-        email: string;
-        phone: string;
-        avatar: string;
-        created_at: Date;
-    };
+export class AuthUserResDto {
+
+    @Expose()
+    @Type(() => UserDto)
+    user: UserDto;
+
+    @Expose()
     accessToken: string;
 
-    constructor(user: User, accessToken: string) {
-        this.user = {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            phone: user.phone,
-            avatar: user.avatar,
-            created_at: user.created_at,
-        };
-        this.accessToken = accessToken;
+    static from(user, accessToken: string): AuthUserResDto {
+        return plainToInstance(
+            AuthUserResDto,
+            {
+                user: user.toObject(),
+                accessToken: accessToken,
+            },
+            {excludeExtraneousValues: true}
+        );
     }
 }
+

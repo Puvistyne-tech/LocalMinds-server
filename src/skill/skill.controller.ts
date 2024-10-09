@@ -1,100 +1,163 @@
-import {Body, Controller, Delete, Get, Param, Post, Put, Query,} from '@nestjs/common';
-import {SkillsService} from './skill.service';
-import {Skill} from './entities/skill.entity';
-import {SkillItem} from './entities/skillTtem.entity';
-import {CreateSkillDto} from './dto/create-skill.dto';
-import {CreateSkillItemDto} from './dto/create-skill-item.dto';
-import {UpdateSkillItemDto} from './dto/update-skill-item.dto';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    MessageEvent,
+    Param,
+    Post,
+    Put,
+    Query,
+    Sse,
+} from "@nestjs/common";
+import {SkillsService} from "./skill.service";
+import {Skill, SkillType} from "./entities/skill.entity";
+import {CreateSkillDto} from "./dto/create-skill.dto";
+import {UpdateSkillDto} from "./dto/update-skill.dto";
+import {fromEvent, map, Observable} from "rxjs";
+import {ResponseSkillDto} from "./dto/response-skill.dto";
 
-@Controller('skills')
+@Controller("skills")
 export class SkillsController {
-    constructor(private readonly skillsService: SkillsService) {
+    constructor(
+        private readonly skillsService: SkillsService
+        // private eventEmitter: EventEmitter2
+    ) {
     }
 
-    @Get('test')
-    testEndpoint(): string {
-        return 'Test endpoint is working';
+    // @Get()
+    // async findAll(): Promise<Skill[]> {
+    //     return this.skillsService.findAll();
+    // }
+
+    // @Get()
+    // findPaginated(
+    //     @Query("page") page: number = 1,
+    //     @Query("pageSize") pageSize: number = 10
+    // ): Promise<{
+    //     skills: ResponseSkillDto[]; totalPages: number, nextPage: number,
+    //     previousPage: number,
+    //     page: number,
+    //     hasNextPage: boolean,
+    // }> {
+    //     return this.skillsService.findPaginated(page, pageSize);
+    // }
+
+    @Sse("stream")
+    skillUpdates(): Observable<any> {
+        // Replace with your actual event source (e.g., from a database change stream)
+
+        const eventSource = fromEvent(
+            this.skillsService.eventEmitter,
+            "skillEvent"
+        );
+        return eventSource.pipe(
+            map((event) => event as MessageEvent)
+        );
     }
 
-    @Get('demo')
-    async createDemoSkill(): Promise<Skill> {
-        return this.skillsService.createDemo();
-    }
+    // @Sse('stream')
+    // findAllStream(): Observable<MessageEvent> {
+    //     return interval(5000)
+    //         .pipe(
+    //             mergeMap(() => {
+    //                 return from(this.skillsService.findAllStream())
+    //                     .pipe(
+    //                         map(skills => ({data: skills})), // Wrap skills in a simple object
+    //                         map(data => new MessageEvent('message', {data})) // Create a MessageEvent
+    //                     );
+    //             })
+    //         );
+    // }
 
     @Get()
-    async findAll(): Promise<Skill[]> {
-        return this.skillsService.findAll();
-    }
-
-    @Get('search')
     async findSkillsByCriteria(
-        @Query('name') name?: string,
-        @Query('tags') tags?: string[],
-        @Query('category') category?: string,
-    ): Promise<Skill[]> {
-        return this.skillsService.findSkillsByCriteria({name, tags, category});
+        @Query("query") query?: string,
+        @Query("tags") tags?: string,
+        @Query("category") category?: string,
+        @Query("type") type?: SkillType,
+        @Query("date") date?: string,
+        @Query("location") location?: string,
+        @Query("order") order?: string,
+        @Query("page") page: number = 1,
+        @Query("pageSize") pageSize: number = 10
+    ): Promise<{
+        skills: ResponseSkillDto[]; totalPages: number, nextPage: number,
+        previousPage: number,
+        page: number,
+        hasNextPage: boolean,
+    }> {
+        // console.log("advanced serach");
+        const res = this.skillsService.advancedSearch({
+            query,
+            tags,
+            category,
+            type,
+            page,
+            pageSize,
+            date,
+            location,
+            order,
+        });
+        // console.log(res);
+        return res;
     }
 
-    @Get(':id')
-    async findSkillById(@Param('id') id: string): Promise<Skill> {
+    @Get("tags")
+    async findAllSkillTags(@Query("query") query?: string): Promise<String[]> {
+        if (query) {
+            return this.skillsService.searchTags(query);
+        }
+        return this.skillsService.getAllTags();
+    }
+
+    @Get("type")
+    async findAllSkillTypes(): Promise<String[]> {
+        return this.skillsService.getAllSkillTypes();
+    }
+
+    @Get(":id")
+    async findSkillById(@Param("id") id: string): Promise<Skill> {
         return this.skillsService.findSkillById(id);
     }
 
-    @Get('items/type/:type')
-    async findSkillItemsByType(
-        @Param('type') type: string,
-    ): Promise<SkillItem[]> {
-        return this.skillsService.findSkillItemsByType(type);
-    }
-
-    @Get(':skillId/items')
-    async findSkillItemsBySkillId(
-        @Param('skillId') skillId: string,
-    ): Promise<SkillItem[]> {
-        return this.skillsService.findSkillItemsBySkillId(skillId);
+    @Get("items/type/:type")
+    async findSkillsByType(@Param("type") type: SkillType): Promise<Skill[]> {
+        return this.skillsService.findSkillsByType(type);
     }
 
     // Create a new skill
     @Post()
     async createSkill(@Body() createSkillDto: CreateSkillDto): Promise<Skill> {
+        // console.log(createSkillDto);
         return this.skillsService.create(createSkillDto);
     }
 
+    @Post("many")
+    async createSkills(
+        @Body() createSkillDtos: CreateSkillDto[]
+    ): Promise<Skill[]> {
+        return this.skillsService.createSkills(createSkillDtos);
+    }
+
     // Update an existing skill by ID
-    @Put(':id')
+    @Put(":id")
     async updateSkill(
-        @Param('id') id: string,
-        @Body() updateSkillDto: Partial<Skill>,
+        @Param("id") id: string,
+        @Body() updateSkillDto: UpdateSkillDto
     ): Promise<Skill> {
         return this.skillsService.update(id, updateSkillDto);
     }
 
     // Delete a skill by ID
-    @Delete(':id')
-    async deleteSkill(@Param('id') id: string): Promise<void> {
+    @Delete(":id")
+    async deleteSkill(@Param("id") id: string): Promise<void> {
         return this.skillsService.delete(id);
     }
 
-    // Create a new skill item
-    @Post('items')
-    async createSkillItem(
-        @Body() createSkillItemDto: CreateSkillItemDto,
-    ): Promise<SkillItem> {
-        return this.skillsService.createSkillItem(createSkillItemDto);
-    }
-
-    // Update a skill item by ID
-    @Put('items/:id')
-    async updateSkillItem(
-        @Param('id') id: string,
-        @Body() updateSkillItemDto: UpdateSkillItemDto,
-    ): Promise<Skill> {
-        return this.skillsService.update(id, updateSkillItemDto);
-    }
-
     // Delete a skill item by ID
-    @Delete('items/:id')
-    async deleteSkillItem(@Param('id') id: string): Promise<void> {
+    @Delete("items/:id")
+    async deleteSkillItem(@Param("id") id: string): Promise<void> {
         return this.skillsService.delete(id);
     }
 }

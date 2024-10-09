@@ -1,349 +1,36 @@
-// import {Injectable, NotFoundException} from '@nestjs/common';
-// import {InjectModel} from '@nestjs/mongoose';
-// import {model, Model} from 'mongoose';
-// import {Skill} from './entities/skill.entity';
-// import {
-//     LinkSkillItem,
-//     PhotoSkillItem,
-//     SkillItem,
-//     SkillItemType,
-//     TextSkillItem,
-//     WorkSkillItem,
-// } from './entities/skillTtem.entity';
-// import {CreateSkillItemDto} from './dto/create-skill-item.dto';
-// import {CreateSkillDto} from './dto/create-skill.dto';
-// import {UpdateSkillItemDto} from "./dto/update-skill-item.dto";
-//
-// @Injectable()
-// export class SkillsService {
-//     constructor(
-//         @InjectModel('Skill') private skillModel: Model<Skill>,
-//         private textModel: TextSkillItem,
-//         private photoModel: PhotoSkillItem,
-//         private workModel: WorkSkillItem,
-//         private linkModel: LinkSkillItem
-//     ) {
-//     }
-//
-//     // Create a new skill
-//     async create(createSkillDto: CreateSkillDto): Promise<Skill> {
-//
-//         const createdSkill = new this.skillModel(createSkillDto);
-//         return createdSkill.save();
-//
-//         // const skill_items = await Promise.all(
-//         //     createSkillDto.skill_items.map(async (item: CreateSkillItemDto) => {
-//         //         return this.createSkillItem(item);
-//         //     }),
-//         // );
-//         //
-//         // // Create and save the Skill instance
-//         // const createdSkill = new this.skillModel({
-//         //     name: createSkillDto.name,
-//         //     description: createSkillDto.description,
-//         //     date_created: new Date(),
-//         //     date_modified: new Date(),
-//         //     tags: createSkillDto.tags,
-//         //     category: createSkillDto.category,
-//         //     skill_items: skill_items,
-//         // });
-//         //
-//         // return createdSkill.save();
-//     }
-//
-//     async findSkillById(id: string): Promise<Skill> {
-//         const skill = await this.skillModel
-//             .findById(id)
-//             .populate('skill_items')
-//             .exec();
-//         if (!skill) {
-//             throw new NotFoundException(`Skill with ID ${id} not found`);
-//         }
-//         return skill;
-//     }
-//
-//     async findAll(): Promise<Skill[]> {
-//         return this.skillModel.find().exec();
-//     }
-//
-//     async findAllSkills(): Promise<Skill[]> {
-//         return this.skillModel.find().populate('skill_items').exec();
-//     }
-//
-//     async findSkillsByCriteria(criteria: {
-//         name?: string;
-//         tags?: string | string[];
-//         category?: string;
-//     }): Promise<Skill[]> {
-//         const exactQuery: any = {};
-//         const partialQuery: any = {};
-//
-//         if (criteria.name) {
-//             exactQuery.name = criteria.name; // Exact match for name
-//             partialQuery.name = {$regex: criteria.name, $options: 'i'}; // Partial match for name
-//         }
-//
-//         if (criteria.tags) {
-//             // Convert tags to an array if it's not already one
-//             const tagsArray = Array.isArray(criteria.tags)
-//                 ? criteria.tags
-//                 : [criteria.tags];
-//
-//             exactQuery.tags = {$all: tagsArray}; // Exact match for tags (all tags must be present)
-//
-//             // Create regex patterns for each tag for partial matches
-//             const tagRegexes = tagsArray.map((tag) => new RegExp(tag, 'i'));
-//
-//             // Match documents that have at least one of the tags matching any regex
-//             partialQuery.tags = {$all: tagRegexes};
-//         }
-//         if (criteria.category) {
-//             exactQuery.category = criteria.category; // Exact match for category
-//             partialQuery.category = criteria.category; // PartialQuery includes exact match for category
-//         }
-//
-//         // Execute the exact match query first
-//         const exactMatches = await this.skillModel
-//             .find(exactQuery)
-//             .populate('skill_items')
-//             .exec();
-//
-//         // Execute the partial match query and filter out duplicates
-//         const partialMatches = await this.skillModel
-//             .find(partialQuery)
-//             .populate('skill_items')
-//             .exec();
-//
-//         // Combine results, ensuring no duplicates
-//         return exactMatches.concat(
-//             partialMatches.filter(
-//                 (partialItem) =>
-//                     !exactMatches.some((exactItem) =>
-//                         (exactItem._id as any).equals(partialItem._id),
-//                     ),
-//             ),
-//         );
-//     }
-//
-//     private getSkillItemModel(type: string): model<SkillItem> {
-//         type = type.toLowerCase(); // Normalize type to lowercase
-//
-//         switch (type) {
-//             case SkillItemType.TEXT.toLowerCase():
-//                 return this.textModel;
-//             case SkillItemType.PHOTO.toLowerCase():
-//                 return this.photoModel;
-//             case SkillItemType.LINK.toLowerCase():
-//                 return this.linkModel;
-//             case SkillItemType.WORK.toLowerCase():
-//                 return this.workModel;
-//             default:
-//                 throw new NotFoundException(`Unknown SkillItem type: ${type}`);
-//         }
-//     }
-//
-//     async findSkillItemsBySkillId(skillId: string): Promise<SkillItem[]> {
-//         const skill = await this.skillModel
-//             .findById(skillId)
-//             .populate('skill_items')
-//             .exec();
-//         if (!skill) {
-//             throw new Error(`Skill with ID ${skillId} not found`);
-//         }
-//         return skill.skill_items;
-//     }
-//
-//     async findSkillItemsByType(type: string): Promise<any[]> {
-//         type = type.toLowerCase(); // Normalize type to lowercase
-//
-//         if (
-//             !Object.values(SkillItemType)
-//                 .map((t) => t.toLowerCase())
-//                 .includes(type)
-//         ) {
-//             throw new NotFoundException(`SkillItem type ${type} not found`);
-//         }
-//
-//         const model = this.getSkillItemModel(type);
-//         return model.find().exec();
-//     }
-//
-//     // async createDemo() {
-//     //     // Create instances of skill items
-//     //
-//     //     const demoText = new TextSkillItem({
-//     //         order: 1,
-//     //         text: 'This is a sample text item.',
-//     //         type: 'Text',
-//     //     });
-//     //
-//     //     const demoLink = new LinkSkillItem({
-//     //         order: 2,
-//     //         link: 'https://example.com',
-//     //         description: 'This is a sample link item.',
-//     //     });
-//     //
-//     //     const demoPhoto = new PhotoSkillItem({
-//     //         order: 3,
-//     //         content: 'photo1.jpg',
-//     //         name: 'First Photo',
-//     //         type: 'Photo',
-//     //     });
-//     //
-//     //     const demoWork = new WorkSkillItem({
-//     //         order: 4,
-//     //         name: 'Project XYZ',
-//     //         description: 'A detailed project description.',
-//     //         location: 'New York, NY',
-//     //         time_slots: ['9:00 AM - 11:00 AM', '1:00 PM - 3:00 PM'],
-//     //     });
-//     //
-//     //     // Combine the skill items into an array
-//     //     const skill_items = [demoText, demoLink, demoPhoto, demoWork];
-//     //
-//     //     // Create a Skill instance using the Mongoose model
-//     //     const demoSkill = new this.skillModel({
-//     //         name: 'Sample Skill',
-//     //         description: 'This is a sample skill description.',
-//     //         date_created: new Date(),
-//     //         date_modified: new Date(),
-//     //         tags: ['Sample Skill'],
-//     //         category: 'Sample Skill',
-//     //         skill_items: skill_items,
-//     //     });
-//     //
-//     //     // Save the Skill to the database
-//     //     return this.createSkill(demoSkill);
-//     // }
-//
-//     async createSkill(skill: Skill): Promise<Skill> {
-//         const createdSkill = new this.skillModel(skill);
-//         return createdSkill.save();
-//     }
-//
-//     async update(
-//         id: string,
-//         updateSkillDto: UpdateSkillItemDto,
-//     ): Promise<Skill> {
-//         // Find the existing Skill
-// // Find the existing Skill
-//         const existingSkill = await this.skillModel.findById(id).exec();
-//         if (!existingSkill) {
-//             throw new Error(`Skill with ID ${id} not found`);
-//         }
-//
-//         // Update Skill fields
-//         if (updateSkillDto.name) existingSkill.name = updateSkillDto.name;
-//         if (updateSkillDto.description) existingSkill.description = updateSkillDto.description;
-//         if (updateSkillDto.tags) existingSkill.tags = updateSkillDto.tags;
-//         if (updateSkillDto.category) {
-//             // existingSkill.category = updateSkillDto.category;
-//         }
-//
-//         // Handle SkillItems update
-//         if (updateSkillDto.skill_items) {
-//             existingSkill.skill_items = await Promise.all(
-//                 updateSkillDto.skill_items.map(async (item) => {
-//                     return this.createSkillItem(item); // Reuse the method to create or update skill items
-//                 }),
-//             );
-//         }
-//
-//         existingSkill.date_modified = new Date();
-//
-//         return existingSkill.save();
-//     }
-//
-//     // async delete(id: string): Promise<void> {
-//     //     const result = await this.skillModel.findByIdAndDelete(id).exec();
-//     //     if (!result) {
-//     //         throw new Error(`Skill with ID ${id} not found`);
-//     //     }
-//     //
-//     //     // Optionally delete related SkillItems
-//     //     // Uncomment if you want to also delete SkillItems from the database
-//     //     await Promise.all(
-//     //         result.skill_items.map(async (item) => {
-//     //             switch (item.type) {
-//     //                 case SkillItemType.TEXT:
-//     //                     return this.textModel.findByIdAndDelete(item._id).exec();
-//     //                 case SkillItemType.LINK:
-//     //                     return this.linkModel.findByIdAndDelete(item._id).exec();
-//     //                 case SkillItemType.PHOTO:
-//     //                     return this.photoModel.findByIdAndDelete(item._id).exec();
-//     //                 case SkillItemType.WORK:
-//     //                     return this.workModel.findByIdAndDelete(item._id).exec();
-//     //             }
-//     //         }),
-//     //     );
-//     // }
-//
-//     createSkillItem(createSkillItemDto: CreateSkillItemDto | UpdateSkillItemDto) {
-//         switch (createSkillItemDto.type) {
-//             case SkillItemType.TEXT:
-//                 return new this.textModel({
-//                     order: createSkillItemDto.order,
-//                     text: createSkillItemDto.content, // Assuming content for Text item
-//                 }).save();
-//             case SkillItemType.LINK:
-//                 return new this.linkModel({
-//                     order: createSkillItemDto.order,
-//                     link: createSkillItemDto.link,
-//                     description: createSkillItemDto.description,
-//                 }).save();
-//             case SkillItemType.PHOTO:
-//                 return new this.photoModel({
-//                     order: createSkillItemDto.order,
-//                     content: createSkillItemDto.content,
-//                     name: createSkillItemDto.name,
-//                     type: createSkillItemDto.type,
-//                 }).save();
-//             case SkillItemType.WORK:
-//                 return new this.workModel({
-//                     order: createSkillItemDto.order,
-//                     name: createSkillItemDto.name,
-//                     description: createSkillItemDto.description,
-//                     location: createSkillItemDto.location, // Assuming content holds location
-//                     time_slots: createSkillItemDto.time_slots, // Assuming content holds time slots
-//                 }).save();
-//             default:
-//                 throw new Error(`Unknown SkillItem type: ${SkillItemType}`);
-//         }
-//     }
-// }
+import {Injectable, NotFoundException} from "@nestjs/common";
+import {InjectModel} from "@nestjs/mongoose";
+import {Model, PaginateModel} from "mongoose";
+import {Skill, SkillType} from "./entities/skill.entity";
+import {CreateSkillDto} from "./dto/create-skill.dto";
+import {UpdateSkillDto} from "./dto/update-skill.dto";
+import {UserService} from "../user/user.service";
+import {EventEmitter} from "events";
+import {ResponseSkillDto} from "./dto/response-skill.dto";
+import {UserDto} from "../user/dto/user.dto";
+import {SkillFilter} from "./SkillFilter";
+import * as paginate from "mongoose-paginate-v2";
+import {populate} from "dotenv";
+import * as constants from "node:constants";
 
+// import {EventEmitter2} from '@nestjs/event-emitter';
 
-import {Injectable, NotFoundException} from '@nestjs/common';
-import {InjectModel} from '@nestjs/mongoose';
-import {Model} from 'mongoose';
-import {Skill, SkillItem} from './entities/skill.entity';
-import {CreateSkillDto} from './dto/create-skill.dto';
-import {CreateSkillItemDto} from './dto/create-skill-item.dto';
-import {UpdateSkillItemDto} from './dto/update-skill-item.dto';
-import {SkillItemType} from "./entities/skillTtem.entity";
+enum SkillEventType {
+    DELETE = "SKILL_DELETE",
+    UPDATE = "SKILL_UPDATE",
+    ADD = "SKILL_ADD",
+}
 
 @Injectable()
 export class SkillsService {
-    constructor(
-        @InjectModel('Skill') private readonly skillModel: Model<Skill>,
-        @InjectModel('SkillItem') private readonly skillItemModel: Model<SkillItem>,
-    ) {
-    }
+    readonly eventEmitter = new EventEmitter(); // Create an EventEmitter
 
-    // Create a demo skill (for testing purposes)
-    async createDemo(): Promise<Skill> {
-        // Example demo data
-        const demoSkill: CreateSkillDto = {
-            name: 'Demo Skill',
-            description: 'This is a demo skill.',
-            category: 'Demo Category',
-            tags: ['demo'],
-            skill_items: [
-                {type: SkillItemType.TEXT, order: 1, content: 'Demo text content'},
-                {type: SkillItemType.LINK, order: 2, url: 'https://example.com'},
-            ],
-        };
-        return this.create(demoSkill);
+    constructor(
+        @InjectModel("Skill") private readonly skillModel: Model<Skill>,
+        @InjectModel("Skill") private readonly skillModelPag: PaginateModel<Skill>,
+        private readonly userService: UserService
+        // private eventEmitter: EventEmitter2
+    ) {
     }
 
     // Find all skills
@@ -351,14 +38,233 @@ export class SkillsService {
         return this.skillModel.find().exec();
     }
 
-    // Find skills by criteria
-    async findSkillsByCriteria(
-        criteria: { name?: string; tags?: string[]; category?: string },
-    ): Promise<Skill[]> {
-        return this.skillModel.find({
-            ...criteria,
-            tags: {$in: criteria.tags || []}, // Ensure tags are matched if provided
-        }).exec();
+    //get the skillTYpes
+    async getAllSkillTypes(): Promise<String[]> {
+        return Object.values(SkillType);
+    }
+
+
+    async advancedSearch(
+        options: SkillFilter
+    ): Promise<{
+        skills: ResponseSkillDto[];
+        totalPages: number;
+        nextPage: number | null;  // Next page will be null if there is no next page
+        previousPage: number | null; // Previous page will be null if it's the first page
+        page: number;
+        hasNextPage: boolean;
+    }> {
+        const query: any = {}; // Build the query object based on filter options
+
+        console.log(options);
+
+        // Use regex for case-insensitive search across multiple fields
+        if (options.query) {
+            query.$or = [
+                {title: {$regex: options.query, $options: "i"}},
+                {content: {$regex: options.query, $options: "i"}},
+            ];
+        }
+
+        // Handle the `tags` filtering
+        if (options.tags) {
+            const tagsArray = options.tags.split(",").map((tag) => tag.trim());
+            query.tags = {$all: tagsArray};
+        }
+
+        if (options.category) {
+            query.category = options.category;
+        }
+
+        // Handle the `type` filtering with case-insensitivity
+        if (options.type) {
+            query.type = options.type;
+        }
+
+        if (options.date) {
+            const dateRange = this.getDateRange(options.date);
+            if (dateRange) {
+                query.date_modified = {$gte: dateRange.start, $lte: dateRange.end};
+            }
+        }
+
+        if (options.location) {
+            query.location = {$regex: options.location, $options: "i"}; // Case-insensitive search
+        }
+
+        // Prepare sorting options
+        const sortOptions: any = {};
+        if (options.order === 'ASCENDING') {
+            sortOptions.date_modified = 1; // 1 for ascending
+        } else if (options.order === 'DESCENDING') {
+            sortOptions.date_modified = -1; // -1 for descending
+        } else {
+            sortOptions.date_modified = -1; // Default to descending (new to old)
+        }
+
+        const paginationOptions: any = {
+            page: options.page || 1, // Default to page 1 if not provided
+            limit: options.pageSize || 10, // Default limit if not provided
+            sort: sortOptions, // Add sorting options here
+            populate: "user",
+        };
+
+        // Perform the pagination and fetch the results
+        const result = await this.skillModelPag.paginate(query, paginationOptions);
+
+        // Prepare the response
+        return {
+            skills: ResponseSkillDto.many(result.docs),
+            totalPages: result.totalPages,
+            nextPage: result.nextPage, // If there's a next page, calculate it
+            previousPage: result.prevPage, // If it's not the first page
+            page: result.page, // Current page
+            hasNextPage: result.hasNextPage, // Whether there is a next page
+        };
+    }
+
+
+    private getDateRange(dateOption: string): { start: Date; end: Date } | null {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        switch (dateOption) {
+            case "TODAY":
+                return {start: today, end: today};
+            case "YESTERDAY":
+                start.setDate(today.getDate() - 1);
+                return {start: start, end: today};
+            case "THREE_DAYS":
+                start.setDate(today.getDate() - 3);
+                return {start: start, end: today};
+            case "WEEK":
+                start.setDate(today.getDate() - 7);
+                return {start: start, end: today};
+            case "MONTH":
+                start.setMonth(today.getMonth() - 1);
+                return {start: start, end: today};
+            case "SIX_MONTHS":
+                start.setMonth(today.getMonth() - 6);
+                return {start: start, end: today};
+            case "YEAR":
+                start.setFullYear(today.getFullYear() - 1);
+                return {start: start, end: today};
+            default:
+                // Handle invalid or unsupported date options
+                return null;
+        }
+    }
+
+
+    // async advancedSearch(
+    //     options: SkillFilter
+    // ): Promise<{ skills: ResponseSkillDto[]; totalPages: number }> {
+    //     const query: any = {}; // Build the query object based on filter options
+    //
+    //     // Use regex for case-insensitive search across multiple fields
+    //     if (options.query) {
+    //         query.$or = [
+    //             {title: {$regex: options.query, $options: "i"}},
+    //             {content: {$regex: options.query, $options: "i"}},
+    //         ];
+    //     }
+    //
+    //     // Handle the `tags` filtering
+    //     if (options.tags) {
+    //         const tagsArray = options.tags.split(",").map((tag) => tag.trim());
+    //         query.tags = {$all: tagsArray};
+    //     }
+    //
+    //     if (options.category) {
+    //         query.category = options.category;
+    //     }
+    //
+    //     // Handle the `type` filtering with case-insensitivity
+    //     if (options.type) {
+    //         query.type = options.type;
+    //     }
+    //
+    //     if (options.date) {
+    //         const dateRange = this.getDateRange(options.date);
+    //         if (dateRange) {
+    //             query.date_modified = {$gte: dateRange.start, $lte: dateRange.end};
+    //         }
+    //     }
+    //
+    //     if (options.location) {
+    //         query.location = {$regex: options.location, $options: "i"}; // Case-insensitive search
+    //     }
+    //
+    //     if (options.page && options.pageSize) {
+    //         // Perform pagination only if page and pageSize are provided
+    //         const paginationOptions = {
+    //             page: options.page,
+    //             limit: options.pageSize,
+    //             populate: "user",
+    //         };
+    //
+    //         const result = await this.skillModelPag.paginate(
+    //             query,
+    //             paginationOptions
+    //         );
+    //         return {
+    //             skills: ResponseSkillDto.many(result.docs),
+    //             totalPages: result.totalPages,
+    //         };
+    //     } else {
+    //         // If no pagination options, fetch all matching skills
+    //         const skills = await this.skillModel.find(query).exec();
+    //         const totalPages: number = 1; // Total count is the length of the fetched skills array
+    //
+    //         return {
+    //             skills: ResponseSkillDto.many(skills),
+    //             totalPages,
+    //         };
+    //     }
+    // }
+    //
+    // private getDateRange(dateOption: string): { start: Date; end: Date } | null {
+    //     const today = new Date();
+    //     today.setHours(0, 0, 0, 0); // Start of today
+    //     const start = new Date();
+    //     start.setHours(0, 0, 0, 0);
+    //
+    //     switch (dateOption) {
+    //         case "TODAY":
+    //             return {start: today, end: today};
+    //         case "YESTERDAY":
+    //             start.setDate(today.getDate() - 1);
+    //             return {start: start, end: today};
+    //         case "THREE_DAYS":
+    //             start.setDate(today.getDate() - 3);
+    //             return {start: start, end: today};
+    //         case "WEEK":
+    //             start.setDate(today.getDate() - 7);
+    //             return {start: start, end: today};
+    //         case "MONTH":
+    //             start.setMonth(today.getMonth() - 1);
+    //             return {start: start, end: today};
+    //         case "SIX_MONTHS":
+    //             start.setMonth(today.getMonth() - 6);
+    //             return {start: start, end: today};
+    //         case "YEAR":
+    //             start.setFullYear(today.getFullYear() - 1);
+    //             return {start: start, end: today};
+    //         default:
+    //             // Handle invalid or unsupported date options
+    //             return null;
+    //     }
+    // }
+
+    async getAllTags(): Promise<string[]> {
+        const result = await this.skillModel.aggregate([
+            {$unwind: "$tags"}, // Deconstructs the tags array
+            {$group: {_id: null, uniqueTags: {$addToSet: "$tags"}}}, // Collects unique tags
+            {$project: {_id: 0, uniqueTags: 1}}, // Project only the uniqueTags field
+        ]);
+        return result.length > 0 ? result[0].uniqueTags : [];
     }
 
     // Find a skill by ID
@@ -371,31 +277,48 @@ export class SkillsService {
     }
 
     // Find skill items by type
-    async findSkillItemsByType(type: string): Promise<SkillItem[]> {
-        return this.skillItemModel.find({type}).exec();
-    }
-
-    // Find skill items by skill ID
-    async findSkillItemsBySkillId(skillId: string): Promise<SkillItem[]> {
-        const skill = await this.skillModel.findById(skillId).exec();
-        if (!skill) {
-            throw new NotFoundException(`Skill with ID ${skillId} not found`);
-        }
-        return skill.skill_items;
+    async findSkillsByType(type: SkillType): Promise<Skill[]> {
+        return this.skillModel.find({type}).exec();
     }
 
     // Create a new skill
     async create(createSkillDto: CreateSkillDto): Promise<Skill> {
         const createdSkill = new this.skillModel(createSkillDto);
-        return createdSkill.save();
+        const user = await this.userService.findOneById(createSkillDto.userId);
+        if (!user) {
+            throw new NotFoundException(
+                `User with ID ${createSkillDto.userId} not found`
+            );
+        }
+        createdSkill.user = user;
+        // return createdSkill.save();
+        const savedSkill = await createdSkill.save();
+
+        // Emit an event after creating a new skill
+        this.eventEmitter.emit("skillEvent", {
+            type: SkillEventType.ADD,
+            data: savedSkill,
+        });
+
+        return savedSkill;
     }
 
     // Update an existing skill by ID
-    async update(id: string, updateSkillDto: UpdateSkillItemDto): Promise<Skill> {
-        const updatedSkill = await this.skillModel.findByIdAndUpdate(id, updateSkillDto, {new: true}).exec();
+    async update(id: string, updateSkillDto: UpdateSkillDto): Promise<Skill> {
+        const updatedSkill = await this.skillModel
+            .findByIdAndUpdate(id, updateSkillDto, {new: true})
+            .populate("user")
+            .exec();
         if (!updatedSkill) {
             throw new NotFoundException(`Skill with ID ${id} not found`);
         }
+
+        // Emit an event after updating a skill
+        this.eventEmitter.emit("skillEvent", {
+            type: SkillEventType.UPDATE,
+            data: updatedSkill,
+        });
+
         return updatedSkill;
     }
 
@@ -405,28 +328,82 @@ export class SkillsService {
         if (!result) {
             throw new NotFoundException(`Skill with ID ${id} not found`);
         }
+        this.eventEmitter.emit("skillEvent", {
+            type: SkillEventType.DELETE,
+            data: result.id,
+        });
     }
 
-    // Create a new skill item
-    async createSkillItem(createSkillItemDto: CreateSkillItemDto): Promise<SkillItem> {
-        const createdSkillItem = new this.skillItemModel(createSkillItemDto);
-        return createdSkillItem.save();
-    }
+    async createSkills(createSkillDtos: CreateSkillDto[]): Promise<Skill[]> {
+        const skills: Skill[] = []; // Initialize an empty array to store created skills
 
-    // Update a skill item by ID
-    async updateSkillItem(id: string, updateSkillItemDto: UpdateSkillItemDto): Promise<SkillItem> {
-        const updatedSkillItem = await this.skillItemModel.findByIdAndUpdate(id, updateSkillItemDto, {new: true}).exec();
-        if (!updatedSkillItem) {
-            throw new NotFoundException(`Skill item with ID ${id} not found`);
+        for (const skillDto of createSkillDtos) {
+            const newSkill = new this.skillModel(skillDto);
+            const savedSkill = await newSkill.save();
+            skills.push(savedSkill);
         }
-        return updatedSkillItem;
+
+        return skills;
     }
 
-    // Delete a skill item by ID
-    async deleteSkillItem(id: string): Promise<void> {
-        const result = await this.skillItemModel.findByIdAndDelete(id).exec();
-        if (!result) {
-            throw new NotFoundException(`Skill item with ID ${id} not found`);
-        }
+    // findAllStream(): Observable<Skill[]> {
+    //     // Fetch skills from the database (adjust as needed)
+    //     const skillsPromise = this.skillModel.find().exec();
+    //
+    //     // Convert the Promise to an Observable
+    //     return from(skillsPromise);
+    // }
+
+    // Find skills with pagination
+    // Find skills with pagination using mongoose-paginate-v2
+    async findPaginated(
+        page: number,
+        pageSize: number
+    ): Promise<{
+        skills: ResponseSkillDto[];
+        totalPages: number,
+        nextPage: number,
+        previousPage: number,
+        page: number,
+        hasNextPage: boolean,
+    }> {
+        const options = {
+            page,
+            limit: pageSize,
+            sort: {date_created: -1}, // Sorting by date_created in descending order
+            populate: "user", // Populating the user field
+        };
+
+        const result = await this.skillModelPag.paginate({}, options);
+
+        const skillDtos = ResponseSkillDto.many(result.docs);
+        const pageCount = result.totalPages; // Total number of pages
+
+        return {
+            skills: skillDtos,
+            totalPages: result.totalPages,
+            nextPage: result.nextPage,
+            previousPage: result.prevPage,
+            page: result.page,
+            hasNextPage: result.hasNextPage,
+        };
+    }
+
+    async searchTags(query: string): Promise<string[]> {
+        const skills = await this.skillModel
+            .find({tags: {$regex: query, $options: "i"}}) // Case-insensitive search
+            .select("tags") // Only retrieve the tags field
+            .exec();
+
+        const tagsSet = new Set<string>();
+        skills.forEach((skill) => {
+            skill.tags.forEach((tag) => {
+                if (tag.toLowerCase().includes(query.toLowerCase())) {
+                    tagsSet.add(tag);
+                }
+            });
+        });
+
+        return Array.from(tagsSet); // Return unique tags as an array
     }
 }
