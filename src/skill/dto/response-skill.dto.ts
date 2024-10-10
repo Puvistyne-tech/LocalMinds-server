@@ -1,10 +1,8 @@
 import {IsArray, IsBoolean, IsDate, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString,} from 'class-validator';
 import {Skill, SkillType} from "../entities/skill.entity";
-import {User} from "../../user/entities/user.entity";
-import {AuthUserResDto} from "../../user/dto/authUserResDto";
 import {UserDto} from "../../user/dto/user.dto";
-import {FlattenMaps, HydratedDocument, Require_id} from "mongoose";
-import {Exclude, Expose, ExposeOptions, plainToClass, plainToInstance, Transform, Type} from "class-transformer";
+import {HydratedDocument} from "mongoose";
+import {Expose, ExposeOptions, plainToInstance, Transform, Type} from "class-transformer";
 import {ObjectId} from 'mongodb'
 
 export class ResponseSkillDto {
