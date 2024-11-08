@@ -4,3 +4,11 @@
 /dist
 /dist/
 .idea
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Service account
+service-account.json

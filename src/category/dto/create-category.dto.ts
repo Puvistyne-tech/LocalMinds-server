@@ -1,12 +1,21 @@
-import {IsArray, IsNotEmpty, IsOptional, IsString} from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateCategoryDto {
+    @ApiProperty({ 
+        example: 'Programming', 
+        description: 'Name of the category' 
+    })
     @IsString()
     @IsNotEmpty()
     name: string;
 
-    @IsOptional()
+    @ApiProperty({ 
+        example: ['Web Development', 'Mobile Development'], 
+        description: 'List of subcategories',
+        required: false 
+    })
     @IsArray()
-    @IsString({each: true})
+    @IsOptional()
     subcategories?: string[];
 }

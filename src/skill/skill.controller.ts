@@ -9,44 +9,28 @@ import {
     Put,
     Query,
     Sse,
+    UseGuards,
 } from "@nestjs/common";
-import {SkillsService} from "./skill.service";
-import {Skill, SkillType} from "./entities/skill.entity";
-import {CreateSkillDto} from "./dto/create-skill.dto";
-import {UpdateSkillDto} from "./dto/update-skill.dto";
-import {fromEvent, map, Observable} from "rxjs";
-import {ResponseSkillDto} from "./dto/response-skill.dto";
+import { SkillsService } from "./skill.service";
+import { Skill, SkillType } from "./entities/skill.entity";
+import { CreateSkillDto } from "./dto/create-skill.dto";
+import { UpdateSkillDto } from "./dto/update-skill.dto";
+import { fromEvent, map, Observable } from "rxjs";
+import { ResponseSkillDto } from "./dto/response-skill.dto";
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Public } from '../metadata';
 
+@ApiTags('skills')
 @Controller("skills")
 export class SkillsController {
     constructor(
         private readonly skillsService: SkillsService
-        // private eventEmitter: EventEmitter2
-    ) {
-    }
+    ) {}
 
-    // @Get()
-    // async findAll(): Promise<Skill[]> {
-    //     return this.skillsService.findAll();
-    // }
-
-    // @Get()
-    // findPaginated(
-    //     @Query("page") page: number = 1,
-    //     @Query("pageSize") pageSize: number = 10
-    // ): Promise<{
-    //     skills: ResponseSkillDto[]; totalPages: number, nextPage: number,
-    //     previousPage: number,
-    //     page: number,
-    //     hasNextPage: boolean,
-    // }> {
-    //     return this.skillsService.findPaginated(page, pageSize);
-    // }
-
+    @Public()
     @Sse("stream")
     skillUpdates(): Observable<any> {
-        // Replace with your actual event source (e.g., from a database change stream)
-
         const eventSource = fromEvent(
             this.skillsService.eventEmitter,
             "skillEvent"
@@ -56,21 +40,45 @@ export class SkillsController {
         );
     }
 
-    // @Sse('stream')
-    // findAllStream(): Observable<MessageEvent> {
-    //     return interval(5000)
-    //         .pipe(
-    //             mergeMap(() => {
-    //                 return from(this.skillsService.findAllStream())
-    //                     .pipe(
-    //                         map(skills => ({data: skills})), // Wrap skills in a simple object
-    //                         map(data => new MessageEvent('message', {data})) // Create a MessageEvent
-    //                     );
-    //             })
-    //         );
-    // }
-
+    @Public()
     @Get()
+    @ApiOperation({ summary: 'Get all skills with filters' })
+    @ApiResponse({ 
+        status: 200, 
+        description: 'Returns filtered skills with pagination',
+        type: [ResponseSkillDto] 
+    })
+    @ApiQuery({ name: 'query', required: false, description: 'Search query string' })
+    @ApiQuery({ name: 'tags', required: false, description: 'Filter by tags' })
+    @ApiQuery({ name: 'category', required: false, description: 'Filter by category' })
+    @ApiQuery({ 
+        name: 'type', 
+        required: false, 
+        enum: SkillType,
+        description: 'Filter by skill type (OFFER or REQUEST)' 
+    })
+    @ApiQuery({ name: 'date', required: false, description: 'Filter by date' })
+    @ApiQuery({ name: 'location', required: false, description: 'Filter by location' })
+    @ApiQuery({ 
+        name: 'order', 
+        required: false, 
+        description: 'Sort order (asc or desc)',
+        enum: ['asc', 'desc'] 
+    })
+    @ApiQuery({ 
+        name: 'page', 
+        required: false, 
+        description: 'Page number', 
+        type: Number,
+        example: 1 
+    })
+    @ApiQuery({ 
+        name: 'pageSize', 
+        required: false, 
+        description: 'Number of items per page', 
+        type: Number,
+        example: 10 
+    })
     async findSkillsByCriteria(
         @Query("query") query?: string,
         @Query("tags") tags?: string,
@@ -81,28 +89,14 @@ export class SkillsController {
         @Query("order") order?: string,
         @Query("page") page: number = 1,
         @Query("pageSize") pageSize: number = 10
-    ): Promise<{
-        skills: ResponseSkillDto[]; totalPages: number, nextPage: number,
-        previousPage: number,
-        page: number,
-        hasNextPage: boolean,
-    }> {
-        // console.log("advanced serach");
-        const res = this.skillsService.advancedSearch({
-            query,
-            tags,
-            category,
-            type,
-            page,
-            pageSize,
-            date,
-            location,
-            order,
+    ) {
+        return this.skillsService.advancedSearch({
+            query, tags, category, type, page,
+            pageSize, date, location, order,
         });
-        // console.log(res);
-        return res;
     }
 
+    @Public()
     @Get("tags")
     async findAllSkillTags(@Query("query") query?: string): Promise<String[]> {
         if (query) {
@@ -111,28 +105,46 @@ export class SkillsController {
         return this.skillsService.getAllTags();
     }
 
+    @Public()
     @Get("type")
     async findAllSkillTypes(): Promise<String[]> {
         return this.skillsService.getAllSkillTypes();
     }
 
+    @Public()
     @Get(":id")
+    @ApiOperation({ summary: 'Get skill by ID' })
+    @ApiResponse({ 
+        status: 200, 
+        description: 'Returns the skill',
+        type: ResponseSkillDto 
+    })
     async findSkillById(@Param("id") id: string): Promise<Skill> {
         return this.skillsService.findSkillById(id);
     }
 
+    @Public()
     @Get("items/type/:type")
     async findSkillsByType(@Param("type") type: SkillType): Promise<Skill[]> {
         return this.skillsService.findSkillsByType(type);
     }
 
-    // Create a new skill
+    // Protected routes below
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Post()
+    @ApiOperation({ summary: 'Create a new skill' })
+    @ApiResponse({ 
+        status: 201, 
+        description: 'Skill created successfully',
+        type: ResponseSkillDto 
+    })
     async createSkill(@Body() createSkillDto: CreateSkillDto): Promise<Skill> {
-        // console.log(createSkillDto);
         return this.skillsService.create(createSkillDto);
     }
 
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Post("many")
     async createSkills(
         @Body() createSkillDtos: CreateSkillDto[]
@@ -140,8 +152,15 @@ export class SkillsController {
         return this.skillsService.createSkills(createSkillDtos);
     }
 
-    // Update an existing skill by ID
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Put(":id")
+    @ApiOperation({ summary: 'Update skill' })
+    @ApiResponse({ 
+        status: 200, 
+        description: 'Skill updated successfully',
+        type: ResponseSkillDto 
+    })
     async updateSkill(
         @Param("id") id: string,
         @Body() updateSkillDto: UpdateSkillDto
@@ -149,13 +168,17 @@ export class SkillsController {
         return this.skillsService.update(id, updateSkillDto);
     }
 
-    // Delete a skill by ID
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Delete(":id")
+    @ApiOperation({ summary: 'Delete skill' })
+    @ApiResponse({ status: 200, description: 'Skill deleted successfully' })
     async deleteSkill(@Param("id") id: string): Promise<void> {
         return this.skillsService.delete(id);
     }
 
-    // Delete a skill item by ID
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Delete("items/:id")
     async deleteSkillItem(@Param("id") id: string): Promise<void> {
         return this.skillsService.delete(id);

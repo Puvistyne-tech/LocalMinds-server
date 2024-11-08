@@ -7,11 +7,8 @@ import {UpdateSkillDto} from "./dto/update-skill.dto";
 import {UserService} from "../user/user.service";
 import {EventEmitter} from "events";
 import {ResponseSkillDto} from "./dto/response-skill.dto";
-import {UserDto} from "../user/dto/user.dto";
 import {SkillFilter} from "./SkillFilter";
-import * as paginate from "mongoose-paginate-v2";
-import {populate} from "dotenv";
-import * as constants from "node:constants";
+import {HydratedDocument} from "mongoose";
 
 // import {EventEmitter2} from '@nestjs/event-emitter';
 
@@ -114,7 +111,7 @@ export class SkillsService {
 
         // Prepare the response
         return {
-            skills: ResponseSkillDto.many(result.docs),
+            skills: ResponseSkillDto.many(result.docs as Array<HydratedDocument<Skill, {}, {}>>),
             totalPages: result.totalPages,
             nextPage: result.nextPage, // If there's a next page, calculate it
             previousPage: result.prevPage, // If it's not the first page
@@ -405,5 +402,9 @@ export class SkillsService {
         });
 
         return Array.from(tagsSet); // Return unique tags as an array
+    }
+
+    getSkillTypes() {
+        return Object.values(SkillType);
     }
 }

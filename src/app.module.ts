@@ -10,21 +10,20 @@ import {AuthModule} from "./auth/auth.module";
 
 @Module({
     imports: [
-        MongooseModule.forRoot('mongodb://localhost/nest'),
-        ConfigModule.forRoot({isGlobal: true}),
-        // TypeOrmModule.forRoot({
-        //   type: 'postgres',
-        //   host: process.env.DB_HOST,
-        //   port: parseInt(process.env.DB_PORT, 10),
-        //   username: process.env.DB_USERNAME,
-        //   password: process.env.DB_PASSWORD,
-        //   database: process.env.DB_DATABASE,
-        //   entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        //   synchronize: true, // Set to false in production
-        // }),
+        ConfigModule.forRoot({
+            isGlobal: true,
+            envFilePath: '.env',
+        }),
+        MongooseModule.forRootAsync({
+            useFactory: () => ({
+                uri: process.env.MONGODB_URI,
+                dbName: process.env.DB_NAME,
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+            }),
+        }),
+        UserModule,
         AuthModule,
-        // UserModule,
-        // EventModule,
         SkillsModule,
         // CategoryModule,
     ],

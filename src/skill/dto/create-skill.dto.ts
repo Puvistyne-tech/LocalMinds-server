@@ -1,39 +1,56 @@
-import {IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString,} from 'class-validator';
-import {SkillType} from "../entities/skill.entity";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { SkillType } from '../entities/skill.entity';
 
 export class CreateSkillDto {
+    @ApiProperty({ example: 'Web Development', description: 'Title of the skill' })
     @IsString()
     @IsNotEmpty()
     title: string;
 
+    @ApiProperty({ 
+        example: { text: 'Experienced in React and Node.js' }, 
+        description: 'Content of the skill post' 
+    })
     @IsNotEmpty()
     content: any;
 
-    // @IsDate()
-    // @IsOptional()
-    // date_created?: Date;
-
-    // @IsDate()
-    // @IsOptional()
-    // date_modified?: Date = new Date();
-
+    @ApiProperty({ 
+        example: ['javascript', 'react'], 
+        description: 'Tags associated with the skill',
+        required: false 
+    })
     @IsArray()
     @IsOptional()
     tags?: string[];
 
+    @ApiProperty({ 
+        example: 'Programming', 
+        description: 'Category of the skill' 
+    })
     @IsString()
     @IsNotEmpty()
     category: string;
 
-    @IsEnum(SkillType) // Add validation for skill_type using the SkillType enum
+    @ApiProperty({ 
+        enum: SkillType,
+        example: SkillType.OFFER,
+        description: 'Type of skill post (OFFER or REQUEST)' 
+    })
+    @IsEnum(SkillType)
     @IsNotEmpty()
     type: SkillType;
 
-    @IsNotEmpty()
-    @IsString()
-    userId: String; // Optional field to associate the skill with a user (if applicable)
+    @ApiProperty({ 
+        example: false, 
+        description: 'Status of the skill',
+        required: false 
+    })
+    @IsBoolean()
+    @IsOptional()
+    status?: boolean;
 
     @IsNotEmpty()
-    @IsBoolean()
-    status: boolean = false; // Opti
+    @IsString()
+    userId: String; 
 }
