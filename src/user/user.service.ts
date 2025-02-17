@@ -107,4 +107,20 @@ export class UserService {
             });
         }
     }
+
+    async findByIdentifier(identifier: string): Promise<User | undefined> {
+        return this.userModel.findOne({
+            $or: [
+                { email: identifier },
+                { username: identifier }
+            ]
+        }).exec();
+    }
+
+    async findByEmailChangeToken(token: string): Promise<User | null> {
+        return this.userModel.findOne({ 
+            email_change_token: token,
+            email_change_expires: { $gt: new Date() }
+        }).exec();
+    }
 }

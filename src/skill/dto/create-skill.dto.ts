@@ -49,8 +49,4 @@ export class CreateSkillDto {
     @IsBoolean()
     @IsOptional()
     status?: boolean;
-
-    @IsNotEmpty()
-    @IsString()
-    userId: String; 
 }

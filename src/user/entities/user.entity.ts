@@ -64,6 +64,21 @@ export class User extends Document {
 
     @ApiProperty({ description: 'Verification expiration date' })
     verification_expires: Date;
+
+    @ApiProperty({ description: 'Username changes count' })
+    username_changes_count: number;
+
+    @ApiProperty({ description: 'Email change token' })
+    email_change_token: string;
+
+    @ApiProperty({ description: 'Email change expiration date' })
+    email_change_expires: Date;
+
+    @ApiProperty({ description: 'New email' })
+    new_email: string;
+
+    @ApiProperty({ description: 'Email change confirmed old' })
+    email_change_confirmed_old: boolean;
 }
 
 const UserSchema = new Schema<User>(
@@ -86,6 +101,11 @@ const UserSchema = new Schema<User>(
         roles: { type: [String], default: ['user'] },
         verification_token: {type: String, required: false},
         verification_expires: {type: Date, required: false},
+        username_changes_count: {type: Number, default: 0},
+        email_change_token: {type: String, required: false},
+        email_change_expires: {type: Date, required: false},
+        new_email: {type: String, required: false},
+        email_change_confirmed_old: {type: Boolean, default: false},
     }, 
     {
         timestamps: { 

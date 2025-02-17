@@ -10,6 +10,7 @@ import {
     Query,
     Sse,
     UseGuards,
+    Request,
 } from "@nestjs/common";
 import { SkillsService } from "./skill.service";
 import { Skill, SkillType } from "./entities/skill.entity";
@@ -20,6 +21,7 @@ import { ResponseSkillDto } from "./dto/response-skill.dto";
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Public } from '../metadata';
+import { HydratedDocument } from 'mongoose';
 
 @ApiTags('skills')
 @Controller("skills")
@@ -30,6 +32,63 @@ export class SkillsController {
 
     @Public()
     @Sse("stream")
+    @ApiOperation({ 
+        summary: 'Real-time skill updates stream',
+        description: `
+Server-Sent Events endpoint for real-time skill updates.
+Emits events for the following actions:
+- SKILL_ADD: When a new skill is created
+- SKILL_UPDATE: When a skill is modified
+- SKILL_DELETE: When a skill is deleted
+
+Each event contains:
+- type: The type of action (ADD/UPDATE/DELETE)
+- data: The skill data or skill ID (for DELETE)
+        `
+    })
+    @ApiResponse({ 
+        status: 200, 
+        description: 'SSE Stream established',
+        schema: {
+            type: 'object',
+            properties: {
+                type: {
+                    type: 'string',
+                    enum: ['SKILL_ADD', 'SKILL_UPDATE', 'SKILL_DELETE'],
+                    description: 'Type of skill event'
+                },
+                data: {
+                    oneOf: [
+                        { $ref: '#/components/schemas/ResponseSkillDto' },
+                        { 
+                            type: 'string',
+                            description: 'Skill ID (for DELETE events)'
+                        }
+                    ],
+                    description: 'Event payload - full skill object for ADD/UPDATE, skill ID for DELETE'
+                }
+            },
+            example: {
+                type: 'SKILL_ADD',
+                data: {
+                    _id: '507f1f77bcf86cd799439011',
+                    title: 'Web Development',
+                    content: { text: 'Experienced in React and Node.js' },
+                    tags: ['javascript', 'react'],
+                    category: 'Programming',
+                    type: 'OFFER',
+                    status: false,
+                    date_created: '2024-01-01T00:00:00.000Z',
+                    date_modified: '2024-01-01T00:00:00.000Z',
+                    user: {
+                        _id: '507f1f77bcf86cd799439012',
+                        username: 'johndoe',
+                        email: 'john@example.com'
+                    }
+                }
+            }
+        }
+    })
     skillUpdates(): Observable<any> {
         const eventSource = fromEvent(
             this.skillsService.eventEmitter,
@@ -139,8 +198,20 @@ export class SkillsController {
         description: 'Skill created successfully',
         type: ResponseSkillDto 
     })
-    async createSkill(@Body() createSkillDto: CreateSkillDto): Promise<Skill> {
-        return this.skillsService.create(createSkillDto);
+    async createSkill(
+        @Body() createSkillDto: CreateSkillDto,
+        @Request() req
+    ): Promise<ResponseSkillDto> {
+        const skill = await this.skillsService.create(createSkillDto, req.user.userId);
+        
+        // Emit event for real-time updates
+        this.skillsService.eventEmitter.emit("skillEvent", {
+            type: "SKILL_ADD",
+            data: skill
+        });
+
+        // Return the created skill as ResponseSkillDto
+        return ResponseSkillDto.from(skill as HydratedDocument<Skill>);
     }
 
     @UseGuards(JwtAuthGuard)

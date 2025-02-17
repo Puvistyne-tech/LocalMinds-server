@@ -60,6 +60,7 @@ export class SkillsService {
             query.$or = [
                 {title: {$regex: options.query, $options: "i"}},
                 {content: {$regex: options.query, $options: "i"}},
+                {tags: {$regex: options.query, $options: "i"}},
             ];
         }
 
@@ -279,25 +280,20 @@ export class SkillsService {
     }
 
     // Create a new skill
-    async create(createSkillDto: CreateSkillDto): Promise<Skill> {
-        const createdSkill = new this.skillModel(createSkillDto);
-        const user = await this.userService.findOneById(createSkillDto.userId);
+    async create(createSkillDto: CreateSkillDto, userId: string): Promise<Skill> {
+        const user = await this.userService.findOneById(userId);
         if (!user) {
             throw new NotFoundException(
-                `User with ID ${createSkillDto.userId} not found`
+                `User with ID ${userId} not found`
             );
         }
-        createdSkill.user = user;
-        // return createdSkill.save();
-        const savedSkill = await createdSkill.save();
 
-        // Emit an event after creating a new skill
-        this.eventEmitter.emit("skillEvent", {
-            type: SkillEventType.ADD,
-            data: savedSkill,
+        const skill = new this.skillModel({
+            ...createSkillDto,
+            user: userId
         });
 
-        return savedSkill;
+        return skill.save();
     }
 
     // Update an existing skill by ID
