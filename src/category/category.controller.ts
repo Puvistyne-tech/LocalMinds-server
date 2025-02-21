@@ -30,6 +30,12 @@ export class CategoryController {
         return this.categoryService.findAll();
     }
 
+    @Get('subcategories')
+    @ApiOperation({ summary: 'Get all subcategories' })
+    @ApiResponse({ status: 200, description: 'Returns all subcategories' })
+    findAllSubcategories(@Param('name') name: string) {
+        return this.categoryService.findByName(name);
+    }
     @Get(':id')
     @ApiOperation({ summary: 'Get category by ID' })
     @ApiResponse({ status: 200, description: 'Returns the category' })
@@ -42,7 +48,7 @@ export class CategoryController {
     @ApiOperation({ summary: 'Update category' })
     @ApiResponse({ status: 200, description: 'Category updated successfully' })
     update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-        // return this.categoryService.update(id, updateCategoryDto);
+        return this.categoryService.update(id, updateCategoryDto);
     }
 
     @Delete(':id')

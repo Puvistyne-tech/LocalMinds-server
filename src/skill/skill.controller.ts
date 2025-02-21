@@ -142,6 +142,7 @@ Each event contains:
         @Query("query") query?: string,
         @Query("tags") tags?: string,
         @Query("category") category?: string,
+        @Query("subcategory") subcategory?: string,
         @Query("type") type?: SkillType,
         @Query("date") date?: string,
         @Query("location") location?: string,
@@ -149,10 +150,12 @@ Each event contains:
         @Query("page") page: number = 1,
         @Query("pageSize") pageSize: number = 10
     ) {
-        return this.skillsService.advancedSearch({
-            query, tags, category, type, page,
+        const result = await this.skillsService.advancedSearch({
+            query, tags, category,subcategory, type, page,
             pageSize, date, location, order,
         });
+        console.log(result.skills);
+        return result;
     }
 
     @Public()

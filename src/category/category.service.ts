@@ -3,9 +3,11 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Category } from "./entities/category.entity";
 import { CreateCategoryDto } from "./dto/create-category.dto";
+import { UpdateCategoryDto } from "./dto/update-category.dto";
 
 @Injectable()
 export class CategoryService {
+
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<Category>
   ) {}
@@ -101,6 +103,11 @@ export class CategoryService {
     // return Promise.all(categories.map(category => this.populateSubcategories(category)));
   }
 
+  async findByName(name: string): Promise<Category> {
+    const category = await this.categoryModel.findOne({name}).exec();
+    return category;
+  }
+
   // Delete a category by ID
   async remove(id: string): Promise<void> {
     const category = await this.categoryModel.findById(id).exec();
@@ -138,6 +145,13 @@ export class CategoryService {
         .exec())
     );
 
+
     return createdCategories;
+  }
+
+  async update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
+    return this.categoryModel
+      .findByIdAndUpdate(id, updateCategoryDto, { new: true })
+      .exec();
   }
 }

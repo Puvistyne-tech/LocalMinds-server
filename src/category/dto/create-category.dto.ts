@@ -18,4 +18,13 @@ export class CreateCategoryDto {
     @IsArray()
     @IsOptional()
     subcategories?: string[];
+
+    @ApiProperty({ 
+        example: 'https://example.com/icon.png', 
+        description: 'Icon URL of the category',
+        required: false 
+    })
+    @IsString()
+    @IsOptional()
+    icon?: string;
 }

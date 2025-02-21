@@ -9,6 +9,7 @@ export class SkillFilter {
     query?: string;
     tags?: string;
     category?: string;
+    subcategory?: string;
     type?: SkillType;
     date?: string;
     location?: string;

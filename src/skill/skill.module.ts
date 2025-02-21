@@ -12,8 +12,8 @@ import {UserModule} from "../user/user.module";
         MongooseModule.forFeature([
             {name: 'Skill', schema: SkillSchema},
         ]),
-        CategoryModule, // Import it here
-        UserModule, // Import the module containing UserService
+        CategoryModule,
+        UserModule,
     ],
     providers: [SkillsService],
     exports: [SkillsService],
