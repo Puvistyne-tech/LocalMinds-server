@@ -1,49 +1,49 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, PaginateModel } from "mongoose";
-import { Skill, SkillType } from "./entities/skill.entity";
-import { CreateSkillDto } from "./dto/create-skill.dto";
-import { UpdateSkillDto } from "./dto/update-skill.dto";
+import { Post, PostType } from "./entities/post.entity";
+import { CreatePostDto } from "./dto/create-post.dto";
+import { UpdatePostDto } from "./dto/update-post.dto";
 import { UserService } from "../user/user.service";
 import { EventEmitter } from "events";
-import { ResponseSkillDto } from "./dto/response-skill.dto";
-import { SkillFilter } from "./SkillFilter";
+import { ResponsePostDto } from "./dto/response-post.dto";
+import { PostFilter } from "./PostFilter";
 import { HydratedDocument } from "mongoose";
 import { Category } from "src/category/entities/category.entity";
 import { CategoryService } from "../category/category.service";
 
 // import {EventEmitter2} from '@nestjs/event-emitter';
 
-enum SkillEventType {
-  DELETE = "SKILL_DELETE",
-  UPDATE = "SKILL_UPDATE",
-  ADD = "SKILL_ADD",
+enum PostEventType {
+  DELETE = "POST_DELETE",
+  UPDATE = "POST_UPDATE",
+  ADD = "POST_ADD",
 }
 
 @Injectable()
-export class SkillsService {
+export class PostsService {
   readonly eventEmitter = new EventEmitter(); // Create an EventEmitter
 
   constructor(
-    @InjectModel("Skill") private readonly skillModel: Model<Skill>,
-    @InjectModel("Skill") private readonly skillModelPag: PaginateModel<Skill>,
+    @InjectModel("Post") private readonly postModel: Model<Post>,
+    @InjectModel("Post") private readonly postModelPag: PaginateModel<Post>,
     private readonly userService: UserService,
     private readonly categoryService: CategoryService
     // private eventEmitter: EventEmitter2
   ) {}
 
-  // Find all skills
-  async findAll(): Promise<Skill[]> {
-    return this.skillModel.find().exec();
+  // Find all posts
+  async findAll(): Promise<Post[]> {
+    return this.postModel.find().exec();
   }
 
-  //get the skillTYpes
-  async getAllSkillTypes(): Promise<String[]> {
-    return Object.values(SkillType);
+  //get the postTypes
+  async getAllPostTypes(): Promise<String[]> {
+    return Object.values(PostType);
   }
 
-  async advancedSearch(options: SkillFilter): Promise<{
-    skills: ResponseSkillDto[];
+  async advancedSearch(options: PostFilter): Promise<{
+    posts: ResponsePostDto[];
     totalPages: number;
     nextPage: number | null; // Next page will be null if there is no next page
     previousPage: number | null; // Previous page will be null if it's the first page
@@ -124,12 +124,12 @@ export class SkillsService {
     };
 
     // Perform the pagination and fetch the results
-    const result = await this.skillModelPag.paginate(query, paginationOptions);
+    const result = await this.postModelPag.paginate(query, paginationOptions);
 
     // Prepare the response
     return {
-      skills: ResponseSkillDto.many(
-        result.docs as Array<HydratedDocument<Skill, {}, {}>>
+      posts: ResponsePostDto.many(
+        result.docs as Array<HydratedDocument<Post, {}, {}>>
       ),
       totalPages: result.totalPages,
       nextPage: result.nextPage, // If there's a next page, calculate it
@@ -273,7 +273,7 @@ export class SkillsService {
   // }
 
   async getAllTags(): Promise<string[]> {
-    const result = await this.skillModel.aggregate([
+    const result = await this.postModel.aggregate([
       { $unwind: "$tags" }, // Deconstructs the tags array
       { $group: { _id: null, uniqueTags: { $addToSet: "$tags" } } }, // Collects unique tags
       { $project: { _id: 0, uniqueTags: 1 } }, // Project only the uniqueTags field
@@ -281,93 +281,93 @@ export class SkillsService {
     return result.length > 0 ? result[0].uniqueTags : [];
   }
 
-  // Find a skill by ID
-  async findSkillById(id: string): Promise<Skill> {
-    const skill = await this.skillModel.findById(id).exec();
-    if (!skill) {
-      throw new NotFoundException(`Skill with ID ${id} not found`);
+  // Find a post by ID
+  async findPostById(id: string): Promise<Post> {
+    const post = await this.postModel.findById(id).exec();
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
     }
-    return skill;
+    return post;
   }
 
-  // Find skill items by type
-  async findSkillsByType(type: SkillType): Promise<Skill[]> {
-    return this.skillModel.find({ type }).exec();
+  // Find post items by type
+  async findPostsByType(type: PostType): Promise<Post[]> {
+    return this.postModel.find({ type }).exec();
   }
 
-  // Create a new skill
-  async create(createSkillDto: CreateSkillDto, userId: string): Promise<Skill> {
+  // Create a new post
+  async create(createPostDto: CreatePostDto, userId: string): Promise<Post> {
     const user = await this.userService.findOneById(userId);
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const skill = new this.skillModel({
-      ...createSkillDto,
+    const post = new this.postModel({
+      ...createPostDto,
       user: userId,
     });
 
-    return skill.save();
+    return post.save();
   }
 
-  // Update an existing skill by ID
-  async update(id: string, updateSkillDto: UpdateSkillDto): Promise<Skill> {
-    const updatedSkill = await this.skillModel
-      .findByIdAndUpdate(id, updateSkillDto, { new: true })
+  // Update an existing post by ID
+  async update(id: string, updatePostDto: UpdatePostDto): Promise<Post> {
+    const updatedPost = await this.postModel
+      .findByIdAndUpdate(id, updatePostDto, { new: true })
       .populate("user")
       .exec();
-    if (!updatedSkill) {
-      throw new NotFoundException(`Skill with ID ${id} not found`);
+    if (!updatedPost) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
     }
 
-    // Emit an event after updating a skill
-    this.eventEmitter.emit("skillEvent", {
-      type: SkillEventType.UPDATE,
-      data: updatedSkill,
+    // Emit an event after updating a post
+    this.eventEmitter.emit("postEvent", {
+      type: PostEventType.UPDATE,
+      data: updatedPost,
     });
 
-    return updatedSkill;
+    return updatedPost;
   }
 
-  // Delete a skill by ID
+  // Delete a post by ID
   async delete(id: string): Promise<void> {
-    const result = await this.skillModel.findByIdAndDelete(id).exec();
+    const result = await this.postModel.findByIdAndDelete(id).exec();
     if (!result) {
-      throw new NotFoundException(`Skill with ID ${id} not found`);
+      throw new NotFoundException(`Post with ID ${id} not found`);
     }
-    this.eventEmitter.emit("skillEvent", {
-      type: SkillEventType.DELETE,
+    this.eventEmitter.emit("postEvent", {
+      type: PostEventType.DELETE,
       data: result.id,
     });
   }
 
-  async createSkills(createSkillDtos: CreateSkillDto[]): Promise<Skill[]> {
-    const skills: Skill[] = []; // Initialize an empty array to store created skills
+  async createPosts(createPostDtos: CreatePostDto[]): Promise<Post[]> {
+    const posts: Post[] = []; // Initialize an empty array to store created posts
 
-    for (const skillDto of createSkillDtos) {
-      const newSkill = new this.skillModel(skillDto);
-      const savedSkill = await newSkill.save();
-      skills.push(savedSkill);
+    for (const postDto of createPostDtos) {
+      const newPost = new this.postModel(postDto);
+      const savedPost = await newPost.save();
+      posts.push(savedPost);
     }
 
-    return skills;
+    return posts;
   }
 
-  // findAllStream(): Observable<Skill[]> {
-  //     // Fetch skills from the database (adjust as needed)
-  //     const skillsPromise = this.skillModel.find().exec();
+  // findAllStream(): Observable<Post[]> {
+  //     // Fetch posts from the database (adjust as needed)
+  //     const postsPromise = this.postModel.find().exec();
   //
   //     // Convert the Promise to an Observable
-  //     return from(skillsPromise);
+  //     return from(postsPromise);
   // }
 
-  // Find skills with pagination
-  // Find skills with pagination using mongoose-paginate-v2
+  // Find posts with pagination
+  // Find posts with pagination using mongoose-paginate-v2
   async findPaginated(
     page: number,
     pageSize: number
   ): Promise<{
-    skills: ResponseSkillDto[];
+    posts: ResponsePostDto[];
     totalPages: number;
     nextPage: number;
     previousPage: number;
@@ -381,13 +381,13 @@ export class SkillsService {
       populate: "user", // Populating the user field
     };
 
-    const result = await this.skillModelPag.paginate({}, options);
+    const result = await this.postModelPag.paginate({}, options);
 
-    const skillDtos = ResponseSkillDto.many(result.docs);
+    const postDtos = ResponsePostDto.many(result.docs);
     const pageCount = result.totalPages; // Total number of pages
 
     return {
-      skills: skillDtos,
+      posts: postDtos,
       totalPages: result.totalPages,
       nextPage: result.nextPage,
       previousPage: result.prevPage,
@@ -397,14 +397,14 @@ export class SkillsService {
   }
 
   async searchTags(query: string): Promise<string[]> {
-    const skills = await this.skillModel
+    const posts = await this.postModel
       .find({ tags: { $regex: query, $options: "i" } }) // Case-insensitive search
       .select("tags") // Only retrieve the tags field
       .exec();
 
     const tagsSet = new Set<string>();
-    skills.forEach((skill) => {
-      skill.tags.forEach((tag) => {
+    posts.forEach((post) => {
+      post.tags.forEach((tag) => {
         if (tag.toLowerCase().includes(query.toLowerCase())) {
           tagsSet.add(tag);
         }
@@ -414,7 +414,7 @@ export class SkillsService {
     return Array.from(tagsSet); // Return unique tags as an array
   }
 
-  getSkillTypes() {
-    return Object.values(SkillType);
+  getPostTypes() {
+    return Object.values(PostType);
   }
 }

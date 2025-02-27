@@ -1,16 +1,16 @@
-import {SkillType} from "./entities/skill.entity";
+import {PostType} from "./entities/post.entity";
 
 enum Order {
     ASCENDING = "ASCENDING",
     DESCENDING = "DESCENDING",
 }
 
-export class SkillFilter {
+export class PostFilter {
     query?: string;
     tags?: string;
     category?: string;
     subcategory?: string;
-    type?: SkillType;
+    type?: PostType;
     date?: string;
     location?: string;
     page?: number;

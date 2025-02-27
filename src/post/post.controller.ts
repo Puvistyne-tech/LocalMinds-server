@@ -11,39 +11,40 @@ import {
     Sse,
     UseGuards,
     Request,
+    Res,
 } from "@nestjs/common";
-import { SkillsService } from "./skill.service";
-import { Skill, SkillType } from "./entities/skill.entity";
-import { CreateSkillDto } from "./dto/create-skill.dto";
-import { UpdateSkillDto } from "./dto/update-skill.dto";
+import { PostsService } from "./post.service";
 import { fromEvent, map, Observable } from "rxjs";
-import { ResponseSkillDto } from "./dto/response-skill.dto";
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Public } from '../metadata';
 import { HydratedDocument } from 'mongoose';
+import { CreatePostDto } from "./dto/create-post.dto";
+import { ResponsePostDto } from "./dto/response-post.dto";
+import { PostType, Post as PostEntity } from "./entities/post.entity";
+import { UpdatePostDto } from "./dto/update-post.dto";
 
-@ApiTags('skills')
-@Controller("skills")
-export class SkillsController {
+@ApiTags('posts')
+@Controller("posts")
+export class PostsController {
     constructor(
-        private readonly skillsService: SkillsService
+        private readonly postsService: PostsService
     ) {}
 
     @Public()
     @Sse("stream")
     @ApiOperation({ 
-        summary: 'Real-time skill updates stream',
+        summary: 'Real-time post updates stream',
         description: `
-Server-Sent Events endpoint for real-time skill updates.
+Server-Sent Events endpoint for real-time post updates.
 Emits events for the following actions:
-- SKILL_ADD: When a new skill is created
-- SKILL_UPDATE: When a skill is modified
-- SKILL_DELETE: When a skill is deleted
+- POST_ADD: When a new post is created
+- POST_UPDATE: When a post is modified
+- POST_DELETE: When a post is deleted
 
 Each event contains:
 - type: The type of action (ADD/UPDATE/DELETE)
-- data: The skill data or skill ID (for DELETE)
+- data: The post data or post ID (for DELETE)
         `
     })
     @ApiResponse({ 
@@ -54,22 +55,22 @@ Each event contains:
             properties: {
                 type: {
                     type: 'string',
-                    enum: ['SKILL_ADD', 'SKILL_UPDATE', 'SKILL_DELETE'],
-                    description: 'Type of skill event'
+                    enum: ['POST_ADD', 'POST_UPDATE', 'POST_DELETE'],
+                    description: 'Type of post event'
                 },
                 data: {
                     oneOf: [
-                        { $ref: '#/components/schemas/ResponseSkillDto' },
+                        { $ref: '#/components/schemas/Res' },
                         { 
                             type: 'string',
-                            description: 'Skill ID (for DELETE events)'
+                            description: 'Post ID (for DELETE events)'
                         }
                     ],
-                    description: 'Event payload - full skill object for ADD/UPDATE, skill ID for DELETE'
+                    description: 'Event payload - full post object for ADD/UPDATE, post ID for DELETE'
                 }
             },
             example: {
-                type: 'SKILL_ADD',
+                type: 'POST_ADD',
                 data: {
                     _id: '507f1f77bcf86cd799439011',
                     title: 'Web Development',
@@ -89,10 +90,10 @@ Each event contains:
             }
         }
     })
-    skillUpdates(): Observable<any> {
+    postUpdates(): Observable<any> {
         const eventSource = fromEvent(
-            this.skillsService.eventEmitter,
-            "skillEvent"
+            this.postsService.eventEmitter,
+            "postEvent"
         );
         return eventSource.pipe(
             map((event) => event as MessageEvent)
@@ -101,11 +102,11 @@ Each event contains:
 
     @Public()
     @Get()
-    @ApiOperation({ summary: 'Get all skills with filters' })
+    @ApiOperation({ summary: 'Get all posts with filters' })
     @ApiResponse({ 
         status: 200, 
-        description: 'Returns filtered skills with pagination',
-        type: [ResponseSkillDto] 
+        description: 'Returns filtered posts with pagination',
+        type: [ResponsePostDto] 
     })
     @ApiQuery({ name: 'query', required: false, description: 'Search query string' })
     @ApiQuery({ name: 'tags', required: false, description: 'Filter by tags' })
@@ -113,8 +114,8 @@ Each event contains:
     @ApiQuery({ 
         name: 'type', 
         required: false, 
-        enum: SkillType,
-        description: 'Filter by skill type (OFFER or REQUEST)' 
+        enum: PostType,
+        description: 'Filter by post type (OFFER or REQUEST)' 
     })
     @ApiQuery({ name: 'date', required: false, description: 'Filter by date' })
     @ApiQuery({ name: 'location', required: false, description: 'Filter by location' })
@@ -138,123 +139,123 @@ Each event contains:
         type: Number,
         example: 10 
     })
-    async findSkillsByCriteria(
+    async findPostsByCriteria(
         @Query("query") query?: string,
         @Query("tags") tags?: string,
         @Query("category") category?: string,
         @Query("subcategory") subcategory?: string,
-        @Query("type") type?: SkillType,
+        @Query("type") type?: PostType,
         @Query("date") date?: string,
         @Query("location") location?: string,
         @Query("order") order?: string,
         @Query("page") page: number = 1,
         @Query("pageSize") pageSize: number = 10
     ) {
-        const result = await this.skillsService.advancedSearch({
+        const result = await this.postsService.advancedSearch({
             query, tags, category,subcategory, type, page,
             pageSize, date, location, order,
         });
-        console.log(result.skills);
+        console.log(result.posts);
         return result;
     }
 
     @Public()
     @Get("tags")
-    async findAllSkillTags(@Query("query") query?: string): Promise<String[]> {
+    async findAllPostTags(@Query("query") query?: string): Promise<String[]> {
         if (query) {
-            return this.skillsService.searchTags(query);
+            return this.postsService.searchTags(query);
         }
-        return this.skillsService.getAllTags();
+        return this.postsService.getAllTags();
     }
 
     @Public()
     @Get("type")
-    async findAllSkillTypes(): Promise<String[]> {
-        return this.skillsService.getAllSkillTypes();
+    async findAllPostTypes(): Promise<String[]> {
+        return this.postsService.getAllPostTypes();
     }
 
     @Public()
     @Get(":id")
-    @ApiOperation({ summary: 'Get skill by ID' })
+    @ApiOperation({ summary: 'Get post by ID' })
     @ApiResponse({ 
         status: 200, 
-        description: 'Returns the skill',
-        type: ResponseSkillDto 
+        description: 'Returns the post',
+        type: ResponsePostDto 
     })
-    async findSkillById(@Param("id") id: string): Promise<Skill> {
-        return this.skillsService.findSkillById(id);
+    async findPostById(@Param("id") id: string): Promise<PostEntity> {
+        return this.postsService.findPostById(id);
     }
 
     @Public()
     @Get("items/type/:type")
-    async findSkillsByType(@Param("type") type: SkillType): Promise<Skill[]> {
-        return this.skillsService.findSkillsByType(type);
+    async findPostsByType(@Param("type") type: PostType): Promise<PostEntity[]> {
+        return this.postsService.findPostsByType(type);
     }
 
     // Protected routes below
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('JWT-auth')
     @Post()
-    @ApiOperation({ summary: 'Create a new skill' })
+    @ApiOperation({ summary: 'Create a new post' })
     @ApiResponse({ 
         status: 201, 
-        description: 'Skill created successfully',
-        type: ResponseSkillDto 
+        description: 'Post created successfully',
+        type: Res 
     })
-    async createSkill(
-        @Body() createSkillDto: CreateSkillDto,
+    async createPost(
+        @Body() createPostDto: CreatePostDto,
         @Request() req
-    ): Promise<ResponseSkillDto> {
-        const skill = await this.skillsService.create(createSkillDto, req.user.userId);
+    ): Promise<ResponsePostDto> {
+        const post = await this.postsService.create(createPostDto, req.user.userId);
         
         // Emit event for real-time updates
-        this.skillsService.eventEmitter.emit("skillEvent", {
-            type: "SKILL_ADD",
-            data: skill
+        this.postsService.eventEmitter.emit("postEvent", {
+            type: "POST_ADD",
+            data: post
         });
 
-        // Return the created skill as ResponseSkillDto
-        return ResponseSkillDto.from(skill as HydratedDocument<Skill>);
+        // Return the created post as Res
+        return ResponsePostDto.from(post as HydratedDocument<PostEntity>);
     }
 
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('JWT-auth')
     @Post("many")
-    async createSkills(
-        @Body() createSkillDtos: CreateSkillDto[]
-    ): Promise<Skill[]> {
-        return this.skillsService.createSkills(createSkillDtos);
+    async createPosts(
+        @Body() createPostDtos: CreatePostDto[]
+    ): Promise<PostEntity[]> {
+        return this.postsService.createPosts(createPostDtos);
     }
 
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('JWT-auth')
     @Put(":id")
-    @ApiOperation({ summary: 'Update skill' })
+    @ApiOperation({ summary: 'Update post' })
     @ApiResponse({ 
         status: 200, 
-        description: 'Skill updated successfully',
-        type: ResponseSkillDto 
+        description: 'Post updated successfully',
+        type: ResponsePostDto 
     })
-    async updateSkill(
+    async updatePost(
         @Param("id") id: string,
-        @Body() updateSkillDto: UpdateSkillDto
-    ): Promise<Skill> {
-        return this.skillsService.update(id, updateSkillDto);
+        @Body() updatePostDto: UpdatePostDto
+    ): Promise<PostEntity> {
+        return this.postsService.update(id, updatePostDto);
     }
 
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('JWT-auth')
     @Delete(":id")
-    @ApiOperation({ summary: 'Delete skill' })
-    @ApiResponse({ status: 200, description: 'Skill deleted successfully' })
-    async deleteSkill(@Param("id") id: string): Promise<void> {
-        return this.skillsService.delete(id);
+    @ApiOperation({ summary: 'Delete post' })
+    @ApiResponse({ status: 200, description: 'Post deleted successfully' })
+    async deletePost(@Param("id") id: string): Promise<void> {
+        return this.postsService.delete(id);
     }
 
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth('JWT-auth')
     @Delete("items/:id")
-    async deleteSkillItem(@Param("id") id: string): Promise<void> {
-        return this.skillsService.delete(id);
+    async deletePostItem(@Param("id") id: string): Promise<void> {
+        return this.postsService.delete(id);
     }
 }

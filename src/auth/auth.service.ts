@@ -482,7 +482,7 @@ If you did not request a password reset, please ignore this email.
 
     // Return user data excluding sensitive information
     return {
-      id: user._id,
+      _id: user._id,
       username: user.username,
       email: user.email,
       firstname: user.firstname,

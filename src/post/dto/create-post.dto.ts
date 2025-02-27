@@ -1,23 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { SkillType } from '../entities/skill.entity';
+import { PostType } from '../entities/post.entity';
 
-export class CreateSkillDto {
-    @ApiProperty({ example: 'Web Development', description: 'Title of the skill' })
+export class CreatePostDto {
+    @ApiProperty({ example: 'Web Development', description: 'Title of the post' })
     @IsString()
     @IsNotEmpty()
     title: string;
 
     @ApiProperty({ 
         example: { text: 'Experienced in React and Node.js' }, 
-        description: 'Content of the skill post' 
+        description: 'Content of the post' 
     })
     @IsNotEmpty()
     content: any;
 
     @ApiProperty({ 
         example: ['javascript', 'react'], 
-        description: 'Tags associated with the skill',
+        description: 'Tags associated with the post',
         required: false 
     })
     @IsArray()
@@ -26,24 +26,24 @@ export class CreateSkillDto {
 
     @ApiProperty({ 
         example: 'Programming', 
-        description: 'Category of the skill' 
+        description: 'Category of the post' 
     })
     @IsString()
     @IsNotEmpty()
     category: string;
 
     @ApiProperty({ 
-        enum: SkillType,
-        example: SkillType.OFFER,
-        description: 'Type of skill post (OFFER or REQUEST)' 
+        enum: PostType,
+        example: PostType.OFFER,
+        description: 'Type of post (OFFER or REQUEST)' 
     })
-    @IsEnum(SkillType)
+    @IsEnum(PostType)
     @IsNotEmpty()
-    type: SkillType;
+    type: PostType;
 
     @ApiProperty({ 
         example: false, 
-        description: 'Status of the skill',
+        description: 'Status of the post',
         required: false 
     })
     @IsBoolean()

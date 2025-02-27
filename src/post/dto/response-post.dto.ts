@@ -1,16 +1,16 @@
 import {IsArray, IsBoolean, IsDate, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString,} from 'class-validator';
-import {Skill, SkillType} from "../entities/skill.entity";
+import {Post, PostType} from "../entities/post.entity";
 import {UserDto} from "../../user/dto/user.dto";
 import {HydratedDocument} from "mongoose";
 import {Expose, ExposeOptions, plainToInstance, Transform, Type} from "class-transformer";
 import {ObjectId} from 'mongodb'
 import {ApiProperty} from '@nestjs/swagger';
 
-export class ResponseSkillDto {
+export class ResponsePostDto {
 
     @ApiProperty({ 
         example: '507f1f77bcf86cd799439011', 
-        description: 'Skill ID' 
+        description: 'Post ID' 
     })
     @IsMongoId()
     @Expose()
@@ -19,7 +19,7 @@ export class ResponseSkillDto {
 
     @ApiProperty({ 
         example: 'Web Development', 
-        description: 'Title of the skill' 
+        description: 'Title of the post' 
     })
     @IsString()
     @IsNotEmpty()
@@ -28,7 +28,7 @@ export class ResponseSkillDto {
 
     @ApiProperty({ 
         example: { text: 'Experienced in React and Node.js' }, 
-        description: 'Content of the skill post' 
+        description: 'Content of the post' 
     })
     @IsNotEmpty()
     @Expose()
@@ -54,7 +54,7 @@ export class ResponseSkillDto {
 
     @ApiProperty({ 
         example: ['javascript', 'react'], 
-        description: 'Tags associated with the skill' 
+        description: 'Tags associated with the post' 
     })
     @IsArray()
     @IsOptional()
@@ -63,7 +63,7 @@ export class ResponseSkillDto {
 
     @ApiProperty({ 
         example: 'Programming', 
-        description: 'Category of the skill' 
+        description: 'Category of the post' 
     })
     @IsString()
     @IsNotEmpty()
@@ -71,18 +71,18 @@ export class ResponseSkillDto {
     category: string;
 
     @ApiProperty({ 
-        enum: SkillType,
-        example: SkillType.OFFER,
-        description: 'Type of skill post (OFFER or REQUEST)' 
+        enum: PostType,
+        example: PostType.OFFER,
+        description: 'Type of post (OFFER or REQUEST)' 
     })
-    @IsEnum(SkillType)
+    @IsEnum(PostType)
     @IsNotEmpty()
     @Expose()
-    type: SkillType;
+    type: PostType;
 
     @ApiProperty({ 
         type: () => UserDto,
-        description: 'User who created the skill' 
+        description: 'User who created the post' 
     })
     @IsNotEmpty()
     @Expose()
@@ -91,21 +91,21 @@ export class ResponseSkillDto {
 
     @ApiProperty({ 
         example: false, 
-        description: 'Status of the skill',
+        description: 'Status of the post',
         default: false 
     })
     @IsBoolean()
     @Expose()
     status: boolean = false;
 
-    static from(skill: HydratedDocument<Skill>): ResponseSkillDto {
-        return plainToInstance(ResponseSkillDto, skill, {
+    static from(post: HydratedDocument<Post>): ResponsePostDto {
+        return plainToInstance(ResponsePostDto, post, {
             excludeExtraneousValues: true
         });
     }
 
-    static many(skills: Array<HydratedDocument<Skill>>) {
-        return skills.map(skill => this.from(skill));
+    static many(posts: Array<HydratedDocument<Post>>) {
+        return posts.map(post => this.from(post));
     }
 }
 
