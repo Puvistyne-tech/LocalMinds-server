@@ -26,7 +26,9 @@ services:
       - .env
     environment:
       NODE_ENV: production
-      MONGO_URI: mongodb://admin:password@mongodb:27017/nest?authSource:admin
+      MONGO_URI: mongodb://admin:password@mongodb:27017/nest?authSource=admin
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
 
     volumes:
       - ./logs:/app/logs  # Store logs persistently outside the container
