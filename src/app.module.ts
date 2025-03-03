@@ -18,8 +18,7 @@ import {AuthModule} from "./auth/auth.module";
             useFactory: () => ({
                 uri: process.env.MONGO_URI,
                 dbName: process.env.DB_NAME,
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
+                family: 4 // Force IPv4
             }),
         }),
         UserModule,
