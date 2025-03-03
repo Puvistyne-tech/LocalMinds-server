@@ -22,13 +22,23 @@ services:
       - "3000:3000"
     depends_on:
       - mongodb
-    env_file:
-      - .env
     environment:
       NODE_ENV: production
       MONGO_URI: mongodb://admin:password@mongodb:27017/nest?authSource=admin
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
+      PORT: ${PORT}  # Injected by the cloud provider
+      JWT_SECRET: ${JWT_SECRET}  # Injected by the cloud provider
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}  # Injected by the cloud provider
+      MAIL_HOST: ${MAIL_HOST}  # Injected by the cloud provider
+      MAIL_USER: ${MAIL_USER}  # Injected by the cloud provider
+      GOOGLE_MAIL_APP_PASSWORD: ${GOOGLE_MAIL_APP_PASSWORD}  # Injected by the cloud provider
+      MAIL_FROM: ${MAIL_FROM}  # Injected by the cloud provider
+      FRONTEND_URL: ${FRONTEND_URL}  # Injected by the cloud provider
+      PASSWORD_RESET_URL: ${PASSWORD_RESET_URL}  # Injected by the cloud provider
+      BCRYPT_SALT_ROUNDS: ${BCRYPT_SALT_ROUNDS}  # Injected by the cloud provider
+      CORS_ORIGIN: ${CORS_ORIGIN}  # Injected by the cloud provider
+      THROTTLE_TTL: ${THROTTLE_TTL}  # Injected by the cloud provider
+      THROTTLE_LIMIT: ${THROTTLE_LIMIT}  # Injected by the cloud provider
+      MOBILE_APP_SCHEME: ${MOBILE_APP_SCHEME}  # Injected by the cloud provider
 
     volumes:
       - ./logs:/app/logs  # Store logs persistently outside the container
