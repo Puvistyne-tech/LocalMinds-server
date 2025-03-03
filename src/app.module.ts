@@ -17,10 +17,10 @@ import {AuthModule} from "./auth/auth.module";
         //print the uri
         MongooseModule.forRootAsync({
             useFactory: () => {
-                console.log('MongoDB URI:', process.env.MONGO_URI);
+                console.log('MongoDB URI:', process.env.MONGO_URL);
                 console.log('Database Name:', process.env.DB_NAME);
                 return {
-                    uri: process.env.MONGO_URI,
+                    uri: process.env.MONGO_URL,
                     dbName: process.env.DB_NAME,
                     family: 4 // Force IPv4
                 };
