@@ -14,12 +14,17 @@ import {AuthModule} from "./auth/auth.module";
             isGlobal: true,
             // envFilePath: '.env',
         }),
+        //print the uri
         MongooseModule.forRootAsync({
-            useFactory: () => ({
-                uri: process.env.MONGO_URI,
-                dbName: process.env.DB_NAME,
-                family: 4 // Force IPv4
-            }),
+            useFactory: () => {
+                console.log('MongoDB URI:', process.env.MONGO_URI);
+                console.log('Database Name:', process.env.DB_NAME);
+                return {
+                    uri: process.env.MONGO_URI,
+                    dbName: process.env.DB_NAME,
+                    family: 4 // Force IPv4
+                };
+            },
         }),
         UserModule,
         AuthModule,
