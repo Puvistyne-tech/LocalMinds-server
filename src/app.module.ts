@@ -7,6 +7,7 @@ import {CategoryModule} from './category/category.module';
 import {ConfigModule} from "@nestjs/config";
 import {UserModule} from "./user/user.module";
 import {AuthModule} from "./auth/auth.module";
+import {ContactModule} from "./contact/contact.module";
 
 @Module({
     imports: [
@@ -29,6 +30,7 @@ import {AuthModule} from "./auth/auth.module";
         UserModule,
         AuthModule,
         PostsModule,
+        ContactModule,
         // CategoryModule,
     ],
     controllers: [AppController],
