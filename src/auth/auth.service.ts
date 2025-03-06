@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ConflictException,
   NotFoundException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { UserService } from "../user/user.service";
@@ -33,50 +34,124 @@ export class AuthService {
   ) {}
 
   async signIn(identifier: string, pass: string) {
-    await this.rateLimiterService.checkRateLimit(`login_${identifier}`);
+    try {
+      // Check rate limiting first
+      //await this.rateLimiterService.checkRateLimit(`login_${identifier}`);
 
-    // Try to find user by username or email
-    const user = await this.usersService.findByIdentifier(identifier);
+      // Validate input
+      if (!identifier || !pass) {
+        throw new BadRequestException({
+          statusCode: 400,
+          message: "Missing credentials",
+          error: "BAD_REQUEST",
+          details: {
+            identifier: !identifier ? "Email or username is required" : undefined,
+            password: !pass ? "Password is required" : undefined
+          }
+        });
+      }
 
-    if (!user) {
-      await bcrypt.compare(pass, "$2b$10$invalidhashforusername");
-      throw new UnauthorizedException("Invalid credentials");
+      // Try to find user by username or email
+      const user = await this.usersService.findByIdentifier(identifier);
+
+      // If user not found, do a dummy compare to prevent timing attacks
+      if (!user) {
+        await bcrypt.compare(pass, "$2b$10$invalidhashforusername");
+        throw new UnauthorizedException({
+          statusCode: 401,
+          message: "Invalid credentials",
+          error: "INVALID_CREDENTIALS"
+        });
+      }
+
+      // Check if user is active
+      if (!user.is_active) {
+        throw new ForbiddenException({
+          statusCode: 403,
+          message: "Account is deactivated",
+          error: "ACCOUNT_DEACTIVATED"
+        });
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(pass, user.password);
+      if (!isPasswordValid) {
+        throw new UnauthorizedException({
+          statusCode: 401,
+          message: "Invalid credentials",
+          error: "INVALID_CREDENTIALS"
+        });
+      }
+
+      // Check email verification
+      if (!user.is_verified) {
+        throw new ForbiddenException({
+          statusCode: 403,
+          message: "Email not verified",
+          error: "EMAIL_NOT_VERIFIED",
+          details: {
+            email: user.email,
+            canResendVerification: true
+          }
+        });
+      }
+
+      // Generate tokens
+      const tokens = await this.generateTokens(user);
+      await this.saveRefreshToken(user, tokens.refresh_token);
+
+      // Return success response with user data and tokens
+      return {
+        statusCode: 200,
+        message: "Login successful",
+        data: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          phone: user.phone,
+          bio: user.bio,
+          avatar: user.avatar,
+          is_verified: user.is_verified,
+          is_active: user.is_active,
+          is_email_verified: user.is_email_verified,
+          roles: user.roles,
+          created_at: user.created_at,
+          modified_at: user.modified_at,
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_in: tokens.expires_in,
+        }
+      };
+    } catch (error) {
+      // Handle rate limit errors
+      if (error.message?.includes('Too Many Requests')) {
+        throw new ForbiddenException({
+          statusCode: 429,
+          message: "Too many login attempts",
+          error: "RATE_LIMIT_EXCEEDED",
+          details: {
+            retryAfter: error.getResponse?.()?.retryAfter || 60
+          }
+        });
+      }
+      
+      // Re-throw known errors
+      if (error instanceof UnauthorizedException || 
+          error instanceof BadRequestException || 
+          error instanceof ForbiddenException) {
+        throw error;
+      }
+
+      // Log unexpected errors and throw a generic error
+      console.error('Login error:', error);
+      throw new UnauthorizedException({
+        statusCode: 500,
+        message: "An unexpected error occurred",
+        error: "INTERNAL_SERVER_ERROR"
+      });
     }
-
-    const isPasswordValid = await bcrypt.compare(pass, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException("Invalid credentials");
-    }
-
-    if (!user.is_verified) {
-      throw new UnauthorizedException(
-        "Please verify your email to access the account."
-      );
-    }
-
-    const tokens = await this.generateTokens(user);
-    await this.saveRefreshToken(user, tokens.refresh_token);
-
-    // Return comprehensive user data with tokens
-    return {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      firstname: user.firstname,
-      lastname: user.lastname,
-      phone: user.phone,
-      bio: user.bio,
-      avatar: user.avatar,
-      is_verified: user.is_verified,
-      is_active: user.is_active,
-      is_email_verified: user.is_email_verified,
-      roles: user.roles,
-      created_at: user.created_at,
-      modified_at: user.modified_at,
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      expires_in: tokens.expires_in,
-    };
   }
 
   async logout(userId: string, refreshToken: string) {
