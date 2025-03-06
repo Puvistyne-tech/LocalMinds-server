@@ -1,5 +1,5 @@
 # ----------- STAGE 1: Build -----------
-FROM node:18-alpine AS builder
+FROM node:20 AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build && ls -la /app/dist
 
 # ----------- STAGE 2: Deploy -----------
-FROM node:18-alpine AS runner
+FROM node:20 AS runner
 
 # Set the working directory
 WORKDIR /app
