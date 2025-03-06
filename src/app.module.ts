@@ -27,7 +27,8 @@ import { ContactModule } from "./contact/contact.module";
         return {
           uri: mongoUri,
           dbName: dbName,
-        //   family: 4, // Force IPv4
+          //should also works with ipv6
+          //   family: 4, // Force IPv4
         };
       },
     }),
