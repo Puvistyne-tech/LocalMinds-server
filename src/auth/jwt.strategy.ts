@@ -32,7 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       userId: payload.sub, 
       username: payload.username,
       email: user.email,
-      isVerified: user.is_verified,
+      isVerified: user.email_verified,
       isActive: user.is_active
     };
   }

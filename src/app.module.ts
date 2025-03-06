@@ -8,6 +8,7 @@ import { ConfigModule } from "@nestjs/config";
 import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { ContactModule } from "./contact/contact.module";
+import { MessagingModule } from "./messaging/messaging.module";
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ContactModule } from "./contact/contact.module";
     AuthModule,
     PostsModule,
     ContactModule,
+    MessagingModule,
     // CategoryModule,
   ],
   controllers: [AppController],

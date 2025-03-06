@@ -84,7 +84,7 @@ export class AuthService {
       }
 
       // Check email verification
-      if (!user.is_verified) {
+      if (!user.email_verified) {
         throw new ForbiddenException({
           statusCode: 403,
           message: "Email not verified",
@@ -113,9 +113,9 @@ export class AuthService {
           phone: user.phone,
           bio: user.bio,
           avatar: user.avatar,
-          is_verified: user.is_verified,
+          email_verified: user.email_verified,
           is_active: user.is_active,
-          is_email_verified: user.is_email_verified,
+          phone_verified: user.phone_verified,
           roles: user.roles,
           created_at: user.created_at,
           modified_at: user.modified_at,
@@ -343,9 +343,6 @@ export class AuthService {
       const user = await this.usersService.create({
         ...userDto,
         password: hashedPassword,
-        is_verified: false,
-        created_at: new Date(),
-        last_login: new Date(),
       });
 
       user.roles = ["user"];
@@ -492,11 +489,11 @@ If you did not request a password reset, please ignore this email.
       });
     }
 
-    if (user.is_verified) {
+    if (user.email_verified) {
       throw new BadRequestException("Email already verified");
     }
 
-    user.is_verified = true;
+    user.email_verified = true;
     user.verification_token = null;
     user.verification_expires = null;
     await user.save();
@@ -522,7 +519,7 @@ If you did not request a password reset, please ignore this email.
       throw new BadRequestException("User not found");
     }
 
-    if (user.is_verified) {
+    if (user.email_verified) {
       throw new BadRequestException("Email is already verified");
     }
 
@@ -565,9 +562,9 @@ If you did not request a password reset, please ignore this email.
       phone: user.phone,
       bio: user.bio,
       avatar: user.avatar,
-      is_verified: user.is_verified,
+      email_verified: user.email_verified,
       is_active: user.is_active,
-      is_email_verified: user.is_email_verified,
+      phone_verified: user.phone_verified,
       roles: user.roles,
       created_at: user.created_at,
       modified_at: user.modified_at,
@@ -758,7 +755,7 @@ If you did not request a password reset, please ignore this email.
 
     // Update email and reset verification status
     user.email = user.new_email;
-    user.is_verified = false;
+    user.email_verified = false;
     user.email_change_token = null;
     user.email_change_expires = null;
     user.new_email = null;
@@ -782,9 +779,9 @@ If you did not request a password reset, please ignore this email.
       phone: user.phone,
       bio: user.bio,
       avatar: user.avatar,
-      is_verified: user.is_verified,
+      email_verified: user.email_verified,
       is_active: user.is_active,
-      is_email_verified: user.is_email_verified,
+      phone_verified: user.phone_verified,
       roles: user.roles,
       created_at: user.created_at,
       modified_at: user.modified_at,

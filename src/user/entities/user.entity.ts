@@ -30,7 +30,7 @@ export class User extends Document {
     avatar: string;
 
     @ApiProperty({ description: 'Email verification status' })
-    is_verified: boolean;
+    email_verified: boolean;
 
     @ApiProperty({ description: 'Account active status' })
     is_active: boolean;
@@ -54,7 +54,7 @@ export class User extends Document {
     reset_password_expires: Date;
 
     @ApiProperty({ description: 'Email verification status' })
-    is_email_verified: boolean;
+    phone_verified: boolean;
 
     @ApiProperty({ description: 'User roles' })
     roles: string[];
@@ -91,13 +91,13 @@ const UserSchema = new Schema<User>(
         lastname: {type: String, required: false},
         bio: {type: String, required: false},
         avatar: {type: String, required: false},
-        is_verified: {type: Boolean, default: false},
+        email_verified: {type: Boolean, default: false},
         is_active: {type: Boolean, default: true},
         connections: [{type: Schema.Types.ObjectId, ref: 'User'}],
         reputations: [{type: String}],
         reset_password_token: {type: String, required: false},
         reset_password_expires: {type: Date, required: false},
-        is_email_verified: {type: Boolean, default: false},
+        phone_verified: {type: Boolean, default: false},
         roles: { type: [String], default: ['user'] },
         verification_token: {type: String, required: false},
         verification_expires: {type: Date, required: false},
