@@ -25,14 +25,14 @@ export class SignInResponseDto {
     @ApiProperty({ example: 'https://example.com/avatar.jpg', description: 'Avatar URL', required: false })
     avatar?: string;
 
-    @ApiProperty({ example: true, description: 'Account verification status' })
-    is_verified: boolean;
+    @ApiProperty({ example: true, description: 'Email verification status' })
+    email_verified: boolean;
 
     @ApiProperty({ example: true, description: 'Account active status' })
     is_active: boolean;
 
-    @ApiProperty({ example: true, description: 'Email verification status' })
-    is_email_verified: boolean;
+    @ApiProperty({ example: true, description: 'Phone verification status' })
+    phone_verified: boolean;
 
     @ApiProperty({ example: ['user'], description: 'User roles' })
     roles: string[];
@@ -70,7 +70,7 @@ export class VerificationResponseDto {
         example: true, 
         description: 'Verification status' 
     })
-    is_verified: boolean;
+    email_verified: boolean;
 }
 
 export class ResendVerificationResponseDto {
@@ -112,14 +112,14 @@ export class ProfileResponseDto {
     @ApiProperty({ example: 'https://example.com/avatar.jpg', description: 'Avatar URL', required: false })
     avatar?: string;
 
-    @ApiProperty({ example: true, description: 'Account verification status' })
-    is_verified: boolean;
+    @ApiProperty({ example: true, description: 'Email verification status' })
+    email_verified: boolean;
 
     @ApiProperty({ example: true, description: 'Account active status' })
     is_active: boolean;
 
-    @ApiProperty({ example: true, description: 'Email verification status' })
-    is_email_verified: boolean;
+    @ApiProperty({ example: true, description: 'Phone verification status' })
+    phone_verified: boolean;
 
     @ApiProperty({ example: ['user'], description: 'User roles' })
     roles: string[];

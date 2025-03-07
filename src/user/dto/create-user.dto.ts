@@ -43,7 +43,7 @@ export class UserDto {
   })
   @IsBoolean()
   @IsOptional()
-  is_verified?: boolean;
+  email_verified?: boolean;
 
   @ApiProperty({
     example: true,
@@ -53,6 +53,15 @@ export class UserDto {
   @IsBoolean()
   @IsOptional()
   is_active?: boolean;
+
+  @ApiProperty({
+    example: false,
+    description: "Is user phone verified",
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  phone_verified?: boolean;
 
   @ApiProperty({
     example: new Date(),

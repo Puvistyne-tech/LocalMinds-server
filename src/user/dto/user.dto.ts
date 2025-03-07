@@ -32,7 +32,7 @@ export class UserDto {
 
     @IsBoolean()
     @Expose()
-    is_verified?: boolean;
+    email_verified?: boolean;
 
     @IsBoolean()
     @Expose()

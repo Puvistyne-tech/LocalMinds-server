@@ -500,7 +500,7 @@ If you did not request a password reset, please ignore this email.
 
     return {
       message: "Email verified successfully",
-      is_verified: true,
+      emailVerified: true,
     };
   }
 
