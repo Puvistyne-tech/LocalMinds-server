@@ -5,15 +5,19 @@ enum Order {
     DESCENDING = "DESCENDING",
 }
 
-export class PostFilter {
+export interface PostFilter {
     query?: string;
     tags?: string;
     category?: string;
     subcategory?: string;
     type?: PostType;
     date?: string;
-    location?: string;
+    location?: {
+        latitude: number;
+        longitude: number;
+        radius?: number; // in meters, optional
+    };
+    order?: string;
     page?: number;
     pageSize?: number;
-    order?: string;
 }

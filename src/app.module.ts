@@ -9,6 +9,7 @@ import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { ContactModule } from "./contact/contact.module";
 import { MessagingModule } from "./messaging/messaging.module";
+import { HealthModule } from "./health/health.module";
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { MessagingModule } from "./messaging/messaging.module";
     PostsModule,
     ContactModule,
     MessagingModule,
+    HealthModule,
     // CategoryModule,
   ],
   controllers: [AppController],

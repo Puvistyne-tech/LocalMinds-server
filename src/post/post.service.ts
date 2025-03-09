@@ -11,6 +11,7 @@ import { PostFilter } from "./PostFilter";
 import { HydratedDocument } from "mongoose";
 import { Category } from "src/category/entities/category.entity";
 import { CategoryService } from "../category/category.service";
+import { LocationQueryDto } from './dto/location-query.dto';
 
 // import {EventEmitter2} from '@nestjs/event-emitter';
 
@@ -103,7 +104,16 @@ export class PostsService {
     }
 
     if (options.location) {
-      query.location = { $regex: options.location, $options: "i" }; // Case-insensitive search
+      const { latitude, longitude, radius = 5000 } = options.location; // Default radius of 5km
+      query.location = {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [longitude, latitude] // MongoDB uses [longitude, latitude]
+          },
+          $maxDistance: radius
+        }
+      };
     }
 
     // Prepare sorting options
@@ -416,5 +426,38 @@ export class PostsService {
 
   getPostTypes() {
     return Object.values(PostType);
+  }
+
+  async findNearby(locationQuery: LocationQueryDto) {
+    const { latitude, longitude, radius } = locationQuery;
+    
+    return this.postModel.find({
+      location: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [longitude, latitude] // MongoDB uses [longitude, latitude]
+          },
+          $maxDistance: radius // Distance in meters
+        }
+      }
+    })
+    .populate('user')
+    .exec();
+  }
+
+  async findWithinBounds(swLat: number, swLng: number, neLat: number, neLng: number) {
+    return this.postModel.find({
+      location: {
+        $geoWithin: {
+          $box: [
+            [swLng, swLat], // Southwest corner [longitude, latitude]
+            [neLng, neLat]  // Northeast corner [longitude, latitude]
+          ]
+        }
+      }
+    })
+    .populate('user')
+    .exec();
   }
 }
